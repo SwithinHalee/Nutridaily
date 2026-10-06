@@ -1,0 +1,339 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg-base: #FDFBF7;
+    --text-primary: #1A1310;
+    --text-muted: #6E665E;
+    --accent-forest: #2C4A3E;
+    --accent-terracotta: #D96B43;
+    --border-warm: #DED8CE;
+    --surface-warm: #F4F0E8;
+  }
+
+  html {
+    background-color: var(--bg-base);
+    color: var(--text-primary);
+    font-family: var(--font-manrope), system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE & Edge */
+  }
+
+  body {
+    background-color: var(--bg-base);
+    color: var(--text-primary);
+    min-height: 100dvh;
+    margin: 0;
+    padding: 0;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE & Edge */
+  }
+
+  /* Sembunyikan vertical scrollbar peramban di Chrome, Safari, dan Edge */
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+
+  /* Anti-AI Typography Balance Rules */
+  h1, h2, h3, h4, h5, h6 {
+    text-wrap: balance;
+    letter-spacing: -0.02em;
+    font-weight: 600;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  /* Custom SVG Cursor: arrow for default, hand for interactive elements */
+  html,
+  body {
+    cursor: url("/cursor-arrow.svg") 4 3, auto;
+  }
+
+  a,
+  button,
+  [role="button"],
+  [role="link"],
+  [role="tab"],
+  [role="menuitem"],
+  summary,
+  label[for],
+  input[type="checkbox"],
+  input[type="radio"],
+  select {
+    cursor: url("/cursor-hand.svg") 10 3, pointer;
+  }
+
+  .cursor-pointer {
+    cursor: url("/cursor-hand.svg") 10 3, pointer !important;
+  }
+
+  input,
+  textarea {
+    cursor: text;
+  }
+
+  input[type="checkbox"],
+  input[type="radio"],
+  select {
+    cursor: url("/cursor-hand.svg") 10 3, pointer;
+  }
+
+  /* Accessible high-contrast focus rings in warm brand colors */
+  :focus-visible {
+    outline: 2px solid #2C4A3E;
+    outline-offset: 2px;
+  }
+
+  /* Banned: italic emphasis. Use weight 500 instead */
+  em, i {
+    font-style: normal;
+    font-weight: 500;
+  }
+}
+
+/* Texture Over Gradient: Film Grain SVG Filter via Data URI */
+.grain-overlay-light {
+  position: relative;
+}
+.grain-overlay-light::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.06;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  border-radius: inherit;
+}
+
+.grain-overlay-panel {
+  position: relative;
+}
+.grain-overlay-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.16;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  border-radius: inherit;
+}
+
+/* Small-caps eyebrow label */
+.eyebrow {
+  font-family: var(--font-manrope), sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Vertical Dual-Column Infinite Carousel Animations */
+/* Catatan: trek memakai padding internal per item (bukan gap flex parent)
+   agar titik -50% tepat di tengah dan putaran terasa mulus tanpa lompat. */
+@keyframes verticalMarqueeDown {
+  0% {
+    transform: translate3d(0, -50%, 0);
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes verticalMarqueeUp {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(0, -50%, 0);
+  }
+}
+
+.animate-marquee-down {
+  animation: verticalMarqueeDown 26s linear infinite;
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+.animate-marquee-up {
+  animation: verticalMarqueeUp 26s linear infinite;
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+/* Status jeda terkontrol pengguna. Dipakai via aria-pressed toggle. */
+.marquee-paused,
+.marquee-paused .animate-marquee-down,
+.marquee-paused .animate-marquee-up,
+.marquee-paused .animate-marquee-horizontal {
+  animation-play-state: paused;
+}
+
+/* Jeda saat kursor atau fokus keyboard berada di area carousel.
+   Dinonaktifkan sementara agar tidak dikira freeze saat inspeksi.
+   Kontrol jeda resmi memakai tombol aria-pressed. */
+/* .marquee-hover-pause:hover .animate-marquee-down,
+.marquee-hover-pause:hover .animate-marquee-up,
+.marquee-hover-pause:focus-within .animate-marquee-down,
+.marquee-hover-pause:focus-within .animate-marquee-up {
+  animation-play-state: paused;
+} */
+
+/* Horizontal Ticker Animation (pengumuman operasional bawah layar) */
+@keyframes horizontalMarquee {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+.animate-marquee-horizontal {
+  animation: horizontalMarquee 28s linear infinite;
+  will-change: transform;
+}
+
+/* Floating Confirmation Toast Animation */
+@keyframes toastSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-toast {
+  animation: toastSlideIn 0.24s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Marquee hero dan ticker dikecualikan dari daftar ini.
+     Keduanya memakai kontrol jeda manual (tombol aria-pressed)
+     dan penggerak requestAnimationFrame agar tombol Putar
+     tetap berfungsi walau sistem memakai mode hemat animasi. */
+  .animate-toast,
+  .click-burst-beam {
+    animation-duration: 0.01ms;
+    animation-iteration-count: 1;
+  }
+  .click-burst {
+    display: none;
+  }
+}
+
+/* Kelas utilitas lama ticker. Dipertahankan sebagai alias agar
+   markup lama tetap berjalan walau nama baru yang dipakai. */
+.animate-marquee {
+  animation: horizontalMarquee 28s linear infinite;
+  will-change: transform;
+}
+
+.marquee-paused .animate-marquee {
+  animation-play-state: paused;
+}
+
+/* Global click micro-interaction: pure radiating ray lines */
+.click-burst {
+  position: fixed;
+  width: 40px;
+  height: 40px;
+  margin-left: -20px;
+  margin-top: -20px;
+  pointer-events: none;
+  z-index: 9999;
+  contain: layout style paint;
+}
+
+.click-burst-beam {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 1px;
+  height: 8px;
+  margin-left: -0.5px;
+  margin-top: -4px;
+  background-color: #2C4A3E;
+  border-radius: 9999px;
+  transform-origin: center center;
+  animation: clickBeamFly 0.25s cubic-bezier(0.12, 1, 0.28, 1) forwards;
+  will-change: transform, opacity;
+}
+
+@keyframes clickBeamFly {
+  0% {
+    transform: rotate(var(--beam-rot)) translateY(-3px) scaleY(0.4);
+    opacity: 0.95;
+  }
+  35% {
+    transform: rotate(var(--beam-rot)) translateY(-10px) scaleY(1.1);
+    opacity: 0.85;
+  }
+  100% {
+    transform: rotate(var(--beam-rot)) translateY(-17px) scaleY(0.15);
+    opacity: 0;
+  }
+}
+
+/* Tactile Click Micro-Animation for Interactive Controls */
+button:not([class*="-translate-"]):not([class*="translate-"]),
+[role="button"]:not([class*="-translate-"]):not([class*="translate-"]),
+.btn-tactile {
+  transition: transform 0.16s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.16s ease, background-color 0.16s ease, border-color 0.16s ease;
+}
+
+button:not([class*="-translate-"]):not([class*="translate-"]):active:not(:disabled),
+[role="button"]:not([class*="-translate-"]):not([class*="translate-"]):active:not([aria-disabled="true"]):not([tabindex="-1"]),
+.btn-tactile:active {
+  transform: scale(0.974);
+  transition-duration: 0.05s;
+}
+
+/* Custom Pill Scrollbar (Floating pill thumb, transparent track, no arrows) */
+.custom-pill-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #D4CCC0 transparent;
+}
+
+.custom-pill-scrollbar::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+  background-color: transparent;
+}
+
+.custom-pill-scrollbar::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
+.custom-pill-scrollbar::-webkit-scrollbar-button {
+  display: none !important;
+  width: 0;
+  height: 0;
+}
+
+.custom-pill-scrollbar::-webkit-scrollbar-corner {
+  background-color: transparent;
+}
+
+.custom-pill-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #D4CCC0;
+  border-radius: 9999px;
+  transition: background-color 0.2s ease;
+}
+
+.custom-pill-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: #2C4A3E;
+}
+

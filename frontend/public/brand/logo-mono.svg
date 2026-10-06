@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%" fill="none" role="img" aria-label="NutriDaily Concept 2 Monochrome: The Tri-Macro Plate Emblem">
+  <!-- KONSEP 2 MONOKROM 1-WARNA (CAP / STEMPEL / CETAK HITAM PUTIH) -->
+  <g>
+    <!-- Lingkaran Luar Presisi -->
+    <circle cx="50" cy="50" r="43" stroke="#1A1310" stroke-width="4.5" />
+    
+    <!-- Mangkuk Geometris Porsi Bersih -->
+    <path d="M22 53 C 22 71, 34 81, 50 81 C 66 81, 78 71, 78 53 Z" fill="#1A1310" />
+    
+    <!-- Daun Kiri -->
+    <path d="M50 47 C 43 37, 37 25, 50 15 C 58 25, 54 37, 50 47 Z" fill="#1A1310" />
+    
+    <!-- Daun Kanan -->
+    <path d="M52 47 C 58 39, 68 31, 66 17 C 54 21, 52 37, 52 47 Z" fill="#1A1310" />
+  </g>
+</svg>

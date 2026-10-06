@@ -1,0 +1,394 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  CUSTOMER
+  CHEF
+  NUTRITIONIST
+  ADMIN
+}
+
+enum PackageType {
+  WEIGHT_LOSS_LEAN_SCULPT    // 1200 - 1400 kcal
+  MUSCLE_GAIN_FIT_BUILD      // 2000 - 2400 kcal
+  MAINTENANCE_VITALITY_DAILY // 1600 - 1800 kcal
+  THERAPEUTIC_DIET           // Low-GI / DASH / Low-Sodium
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAUSED
+  CANCELLED
+  EXPIRED
+}
+
+enum MealType {
+  LUNCH
+  DINNER
+  BOTH
+}
+
+enum OrderStatus {
+  SCHEDULED
+  PROCESSING
+  COOKING
+  READY_TO_DISPATCH
+  IN_TRANSIT
+  DELIVERED
+  CANCELLED
+  SKIPPED
+}
+
+enum KDSTicketStatus {
+  QUEUED
+  COOKING
+  PLATED
+  PACKED
+  DISPATCHED
+}
+
+enum PaymentStatus {
+  PENDING
+  SETTLEMENT
+  CAPTURE
+  DENY
+  CANCEL
+  EXPIRE
+  REFUND
+}
+
+enum DeliveryStatus {
+  PENDING_PICKUP
+  DRIVER_ASSIGNED
+  PICKED_UP
+  ON_THE_WAY
+  DELIVERED
+  FAILED
+}
+
+model User {
+  id                String         @id @default(uuid())
+  email             String         @unique
+  phone             String         @unique
+  passwordHash      String         // Argon2id encoded hash ($argon2id$v=19$m=19456,t=2,p=1$...)
+  fullName          String
+  role              Role           @default(CUSTOMER)
+  isVerified        Boolean        @default(false)
+  emailVerifiedAt   DateTime?
+  // Bumped on password change / reset / logout-all. Access tokens carry this value ("tv" claim)
+  // so every outstanding access token is invalidated immediately, not after its 15 minute TTL.
+  tokenVersion      Int            @default(0)
+  passwordChangedAt DateTime?
+  failedLoginCount  Int            @default(0)
+  lockedUntil       DateTime?
+  lastLoginAt       DateTime?
+  // Soft delete (UU PDP No. 27/2022): PII is anonymised, row kept for invoice/tax retention.
+  deletedAt         DateTime?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  healthProfile            HealthProfile?
+  subscriptions            Subscription[]
+  orders                   Order[]
+  payments                 Payment[]
+  addresses                Address[]
+  serviceClaims            ServiceRecoveryClaim[]
+  refreshTokens            RefreshToken[]
+  passwordResetTokens      PasswordResetToken[]
+  emailVerificationTokens  EmailVerificationToken[]
+  loginAuditLogs           LoginAuditLog[]
+
+  @@index([deletedAt])
+}
+
+// Audit log aktivitas login (sukses / gagal, IP, User Agent, dan alasan kegagalan)
+model LoginAuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  email     String
+  status    String   // "SUCCESS" | "FAILED"
+  reason    String?  // "INVALID_CREDENTIALS" | "ACCOUNT_LOCKED" | "EMAIL_NOT_VERIFIED" | "RATE_LIMITED"
+  ipAddress String?  @db.VarChar(64)
+  userAgent String?  @db.VarChar(256)
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([email, createdAt])
+  @@index([createdAt])
+}
+
+// Long-lived opaque session token (30 days). Only the SHA-256 hash is stored.
+// Rotation: every refresh revokes the presented row and creates a new one in the same family.
+// Presenting an already-revoked token = theft signal => the whole family is revoked.
+model RefreshToken {
+  id           String    @id @default(uuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash    String    @unique @db.Char(64)
+  familyId     String    // Constant across one login session's rotation chain
+  expiresAt    DateTime
+  revokedAt    DateTime?
+  revokedReason String?  // "ROTATED" | "LOGOUT" | "LOGOUT_ALL" | "PASSWORD_CHANGED" | "REUSE_DETECTED" | "ACCOUNT_DELETED"
+  replacedById String?   @unique
+  replacedBy   RefreshToken? @relation("TokenRotation", fields: [replacedById], references: [id], onDelete: SetNull)
+  replaces     RefreshToken? @relation("TokenRotation")
+  userAgent    String?   @db.VarChar(256)
+  ipAddress    String?   @db.VarChar(64)
+  createdAt    DateTime  @default(now())
+  lastUsedAt   DateTime?
+
+  @@index([userId, revokedAt])
+  @@index([familyId])
+  @@index([expiresAt])
+}
+
+// One-time password reset token, 15 minute expiry, single use.
+model PasswordResetToken {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash   String    @unique @db.Char(64)
+  expiresAt   DateTime
+  usedAt      DateTime?
+  requestedIp String?   @db.VarChar(64)
+  createdAt   DateTime  @default(now())
+
+  @@index([userId, usedAt])
+  @@index([expiresAt])
+}
+
+// One-time email verification token, 24 hour expiry, single use.
+model EmailVerificationToken {
+  id        String    @id @default(uuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique @db.Char(64)
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, usedAt])
+  @@index([expiresAt])
+}
+
+model Address {
+  id            String         @id @default(uuid())
+  userId        String
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  label         String         // e.g. "Kantor SCBD", "Apartemen Senopati"
+  recipientName String
+  phoneNumber   String
+  fullAddress   String
+  latitude      Float
+  longitude     Float
+  notes         String?        // e.g. "Titip di lobby reception"
+  isPrimary     Boolean        @default(false)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  subscriptions Subscription[]
+  orders        Order[]
+}
+
+model HealthProfile {
+  id                   String      @id @default(uuid())
+  userId               String      @unique
+  user                 User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  heightCm             Float
+  weightKg             Float
+  age                  Int
+  gender               String      // "MALE" | "FEMALE"
+  activityLevel        String      // "SEDENTARY", "LIGHT", "MODERATE", "VERY_ACTIVE"
+  tdeeKcal             Float
+  targetCalories       Float
+  targetProteinGrams   Float
+  targetCarbsGrams     Float
+  targetFatGrams       Float
+  allergies            String[]    // e.g. ["PEANUT", "SEAFOOD", "GLUTEN"]
+  medicalConditions    String[]    // e.g. ["HYPERTENSION", "DIABETES_T2"]
+  // UU PDP No. 27/2022 Compliant AES-256-GCM Encrypted Health & Medical Notes
+  encryptedMedicalNotes String?    // Base64 (iv:authTag:ciphertext)
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+}
+
+model Recipe {
+  id                  String       @id @default(uuid())
+  skuCode             String       @unique // e.g. "ND-WL-001"
+  title               String
+  category            PackageType
+  calories            Float
+  proteinGrams        Float
+  carbsGrams          Float
+  fatGrams            Float
+  ingredients         Json         // Detailed ingredient list with farm origins
+  allergens           String[]
+  labTestedPurityDate DateTime?
+  macroLabReportUrl   String?
+  qrVerificationCode  String       @unique // Scannable clean label code
+  imageUrl            String?
+  isActive            Boolean      @default(true)
+  availableFrom       DateTime?
+  availableUntil      DateTime?
+  availableDays       String[]
+  ingredientCostRp    Float?
+  details             Json?
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+
+  orders              Order[]
+}
+
+model Subscription {
+  id                String             @id @default(uuid())
+  userId            String
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  packageType       PackageType
+  durationDays      Int                // 5 (Weekly Business), 20 (Monthly Workday), 30 (Full Month)
+  mealSchedule      MealType           @default(LUNCH)
+  startDate         DateTime
+  endDate           DateTime
+  status            SubscriptionStatus @default(ACTIVE)
+  deliveryAddressId String
+  deliveryAddress   Address            @relation(fields: [deliveryAddressId], references: [id])
+  autoRenew         Boolean            @default(true)
+  pricePerDay       Float
+  totalAmount       Float
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  orders            Order[]
+  payments          Payment[]
+
+  @@index([status])
+  @@index([userId])
+}
+
+model Order {
+  id                 String             @id @default(uuid())
+  subscriptionId     String?
+  subscription       Subscription?      @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+  userId             String
+  user               User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orderDate          DateTime           // Delivery Date (Y-M-D)
+  mealType           MealType           @default(LUNCH)
+  deliverySlot       String             // "LUNCH_SLOT_11_12" | "DINNER_SLOT_17_18"
+  recipeId           String
+  recipe             Recipe             @relation(fields: [recipeId], references: [id])
+  addressId          String
+  address            Address            @relation(fields: [addressId], references: [id])
+  status             OrderStatus        @default(SCHEDULED)
+  customGrammage     Json?              // Custom portion adjustments based on target TDEE
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  kdsTicket          KDSTicket?
+  serviceClaim       ServiceRecoveryClaim?
+
+  @@unique([subscriptionId, orderDate, mealType])
+  @@index([orderDate, status])
+}
+
+model KitchenHub {
+  id                 String             @id @default(uuid())
+  name               String             // e.g. "Central Kitchen Sudirman", "Satellite Hub Kuningan"
+  address            String
+  latitude           Float
+  longitude          Float
+  isActive           Boolean            @default(true)
+  createdAt          DateTime           @default(now())
+
+  tickets            KDSTicket[]
+}
+
+model KDSTicket {
+  id                 String             @id @default(uuid())
+  orderId            String             @unique
+  order              Order              @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  kitchenHubId       String
+  kitchenHub         KitchenHub         @relation(fields: [kitchenHubId], references: [id])
+  ticketNumber       String             @unique // e.g. "TKT-20261003-0042"
+  grammageDetails    Json               // Exact weighed specs: { proteinG: 180, carbG: 150, vegG: 120 }
+  specialDietNotes   String?            // e.g. "NO SEAFOOD / HYPERTENSION LOW-SODIUM"
+  status             KDSTicketStatus    @default(QUEUED)
+  qrCodeUrl          String?            // Link to Clean Label inspection
+  chefAssignedId     String?
+  queuedAt           DateTime           @default(now())
+  cookingStartedAt   DateTime?
+  platedAt           DateTime?
+  packedAt           DateTime?
+  dispatchedAt       DateTime?
+  isArchived         Boolean            @default(false)
+  archivedAt         DateTime?
+
+  logisticsDispatch  LogisticsDispatch?
+
+  @@index([status, kitchenHubId])
+  @@index([queuedAt])
+  @@index([isArchived])
+}
+
+model Payment {
+  id                 String         @id @default(uuid())
+  userId             String
+  user               User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscriptionId     String?
+  subscription       Subscription?  @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+  invoiceNumber      String         @unique // e.g. "INV/ND/20261003/001"
+  amount             Float
+  paymentType        String         // "MIDTRANS_SNAP", "QRIS", "BCA_VA", "GOPAY", "RECURRING_CC"
+  transactionStatus  PaymentStatus  @default(PENDING)
+  snapToken          String?
+  snapRedirectUrl    String?
+  recurringToken     String?        // Tokenization for recurring subscription charge
+  gatewayReferenceId String?        // Midtrans Transaction ID / Xendit ID
+  webhookLogs        Json?          // Audit trail log of gateway events
+  paidAt             DateTime?
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  @@index([transactionStatus])
+  @@index([invoiceNumber])
+}
+
+model LogisticsDispatch {
+  id                 String         @id @default(uuid())
+  kdsTicketId        String         @unique
+  kdsTicket          KDSTicket      @relation(fields: [kdsTicketId], references: [id], onDelete: Cascade)
+  courierProvider    String         // "GOSEND_INSTANT", "GRAB_EXPRESS", "LALAMOVE", "INTERNAL_FLEET"
+  trackingNumber     String?
+  trackingUrl        String?
+  driverName         String?
+  driverPhone        String?
+  deliveryStatus     DeliveryStatus @default(PENDING_PICKUP)
+  dispatchStartTime  DateTime?
+  deliveredAt        DateTime?
+  proofPhotoUrl      String?        // Photo proof of dropoff
+  failureReason      String?
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  @@index([deliveryStatus])
+}
+
+model ServiceRecoveryClaim {
+  id                 String         @id @default(uuid())
+  orderId            String         @unique
+  order              Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  userId             String
+  user               User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  issueType          String         // "FOOD_SPILLED", "LATE_OVER_45_MIN", "WRONG_PORTION", "COLD_MEAL"
+  evidencePhotoUrl   String
+  customerNotes      String?
+  status             String         @default("PENDING_REVIEW") // "APPROVED_REPLACEMENT", "REFUNDED", "REJECTED"
+  resolution         String?
+  createdAt          DateTime       @default(now())
+  resolvedAt         DateTime?
+}

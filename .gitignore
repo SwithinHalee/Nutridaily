@@ -1,0 +1,139 @@
+# ==========================================
+# NutriDaily Indonesia - .gitignore
+# ==========================================
+
+# ------------------------------------------
+# 1. AI Assistants, Agents & LLM Tooling
+# ------------------------------------------
+.agents/
+agents.md
+AGENTS.md
+.gemini/
+.claude/
+.claudecode/
+.claudecoderc
+claude.json
+.cursor/
+.cursorrules
+.cursorignore
+.windsurf/
+.codeium/
+.cline/
+.roo/
+.roomodes
+.continue/
+.copilot/
+.devin/
+.v0/
+.aider*
+*.prompt
+*.prompt.md
+*.agent.log
+*transcript*.jsonl
+brain/
+
+# ------------------------------------------
+# 2. Dependencies & Package Managers
+# ------------------------------------------
+node_modules/
+*/node_modules/
+.pnp
+.pnp.js
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ------------------------------------------
+# 3. Build Artifacts & Caches
+# ------------------------------------------
+# NestJS Backend
+dist/
+backend/dist/
+coverage/
+backend/coverage/
+
+# Next.js Frontend
+.next/
+frontend/.next/
+.next-dev/
+frontend/.next-dev/
+out/
+frontend/out/
+build/
+
+# TypeScript Caches
+*.tsbuildinfo
+frontend/tsconfig.tsbuildinfo
+backend/tsconfig.tsbuildinfo
+next-env.d.ts
+
+# ------------------------------------------
+# 4. Environment Variables & Secrets
+# ------------------------------------------
+.env
+.env*.local
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+backend/.env
+frontend/.env.local
+!*.env.example
+
+# SSL Certificates & Private Keys
+*.pem
+*.key
+*.cert
+*.crt
+
+# ------------------------------------------
+# 5. Local Runtime Storage & Databases
+# ------------------------------------------
+backend/data/*.store.json
+postgres_data/
+redis_data/
+*.sqlite
+*.sqlite3
+*.db
+
+# ------------------------------------------
+# 6. IDEs & Operating System Artifacts
+# ------------------------------------------
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Editors
+.vscode/*
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/settings.json
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+
+# ------------------------------------------
+# 7. Large Binary Assets & Presentation Files
+# ------------------------------------------
+*.pptx
+NutriDaily_Frontend_Presentation.pptx
+logo_review/
+presentation_assets/

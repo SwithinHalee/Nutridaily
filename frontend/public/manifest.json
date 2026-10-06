@@ -1,0 +1,42 @@
+{
+  "name": "NutriDaily Indonesia",
+  "short_name": "NutriDaily",
+  "description": "Platform Katering Sehat Terpersonalisasi Berbasis Langganan Digital & Kitchen Display System",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FDFBF7",
+  "theme_color": "#2C4A3E",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["food", "health", "lifestyle", "fitness"],
+  "shortcuts": [
+    {
+      "name": "Kalkulator TDEE",
+      "url": "/#calculator",
+      "description": "Hitung kebutuhan kalori dan makronutrisi harian Anda"
+    },
+    {
+      "name": "Dashboard Langganan",
+      "url": "/dashboard",
+      "description": "Atur jadwal menu, pause, swap menu sebelum 20.00 WIB"
+    },
+    {
+      "name": "Scan Clean Label",
+      "url": "/verify/ND-VERIFY-SALMON-2026",
+      "description": "Verifikasi asal bahan & uji lab boks katering"
+    }
+  ]
+}
