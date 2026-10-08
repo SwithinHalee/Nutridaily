@@ -17,6 +17,7 @@ export default function RegisterPage() {
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [dataConsent, setDataConsent] = useState(false);
 
   const [submitting, setSubmitting] = useState(false);
   const [resending, setResending] = useState(false);
@@ -35,6 +36,11 @@ export default function RegisterPage() {
       return;
     }
 
+    if (!dataConsent) {
+      setFieldErrors({ dataConsent: 'Centang persetujuan penggunaan data tubuh menurut UU PDP No. 27/2022 untuk mendaftar.' });
+      return;
+    }
+
     setSubmitting(true);
     try {
       await authApi.register({
@@ -43,6 +49,7 @@ export default function RegisterPage() {
         phone: phone.trim(),
         password,
         confirmPassword,
+        dataConsent: true,
       });
       setRegisteredEmail(email.trim());
     } catch (err) {
@@ -209,13 +216,34 @@ export default function RegisterPage() {
           disabled={submitting}
         />
 
-        <p className="text-[11px] text-warm-muted leading-relaxed [text-wrap:pretty]">
-          Dengan mendaftar, Anda menyetujui penyimpanan rekam gizi dan data kesehatan sesuai regulasi
-          perlindungan data pribadi UU PDP No. 27/2022.
-        </p>
+        <div className="p-3.5 bg-tebu-50 border border-warm-border rounded-lg">
+          <div className="flex items-start gap-2.5">
+            <input
+              id="data-consent"
+              type="checkbox"
+              checked={dataConsent}
+              onChange={(e) => setDataConsent(e.target.checked)}
+              disabled={submitting}
+              aria-describedby="data-consent-hint"
+              className="mt-0.5 w-4 h-4 shrink-0 rounded border-warm-border text-forest focus:ring-forest cursor-pointer"
+            />
+            <label htmlFor="data-consent" className="text-[11px] text-warm-muted leading-relaxed [text-wrap:pretty] cursor-pointer">
+              Saya menyetujui penggunaan data tubuh untuk kalkulasi menu menurut UU PDP No. 27/2022.{' '}
+              <Link href="/privacy" className="font-semibold text-forest hover:text-forest-hover underline">
+                Baca kebijakan privasi dan kontak DPO
+              </Link>
+              .
+            </label>
+          </div>
+          {fieldErrors.dataConsent && (
+            <p id="data-consent-hint" role="alert" className="mt-1.5 text-[11px] font-medium text-terracotta-active">
+              {fieldErrors.dataConsent}
+            </p>
+          )}
+        </div>
 
         <div className="pt-2">
-          <SubmitButton loading={submitting} loadingLabel="Membuat akun terenkripsi...">
+          <SubmitButton loading={submitting} loadingLabel="Membuat akun terenkripsi..." disabled={!dataConsent}>
             Daftar akun sekarang
           </SubmitButton>
         </div>

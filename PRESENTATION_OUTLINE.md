@@ -1,4 +1,4 @@
-# Struktur & Catatan Presentasi NutriDaily Frontend (12 Slide)
+# Struktur & Catatan Presentasi NutriDaily Frontend (13 Slide)
 
 Dokumen ini adalah ringkasan konten, susunan visual, dan panduan presentasi untuk berkas presentasi [NutriDaily_Frontend_Presentation.pptx](file:///D:/Projects/Nutridaily/NutriDaily_Frontend_Presentation.pptx). Presentasi ini berfokus khusus pada ranah **Frontend Pelanggan D2C (Port 3000)**.
 
@@ -45,7 +45,7 @@ Dokumen ini adalah ringkasan konten, susunan visual, dan panduan presentasi untu
 * **Judul**: Antarmuka hero beranda: sajian visual & fakta riil
 * **Poin Pembahasan**:
   1. **Headline Berbobot**: "Makanan sehat berstandar restoran. Diukur presisi per gram gizi." dengan CSS text-wrap balancing.
-  2. **Tombol Aksi Berbasis Hasil**: CTA spesifik "Hitung kebutuhan kalori TDEE" dan "Lihat rotasi 60 menu" menggantikan tombol generik.
+  2. **Tombol Aksi Berbasis Hasil**: CTA spesifik "Hitung kebutuhan kalori TDEE" dan "Lihat rotasi 30 menu" menggantikan tombol generik. Fase validasi memakai 30 resep aktif.
   3. **Angka Riil Spesifik (Lumpy Numbers)**: 1.842 pax pelanggan aktif mingguan, toleransi timbangan ± 4.2 gram, kepuasan rasa 4.9 / 5.0.
   4. **Galeri Makanan Riil**: Foto nyata boks katering ramah lingkungan tanpa ilustrasi generik.
 * **Visual**: Tangkapan layar resolusi tinggi hero desktop ([01_home_hero.png](file:///D:/Projects/Nutridaily/presentation_assets/01_home_hero.png)).
@@ -65,9 +65,9 @@ Dokumen ini adalah ringkasan konten, susunan visual, dan panduan presentasi untu
 
 ### Slide 6: Katalog Menu Mingguan & Fleksibilitas Rotasi
 * **Kategori**: KATALOG SAJIAN
-* **Judul**: Katalog 60 resep rotasi & proteksi data pelanggan
+* **Judul**: Katalog 30 resep aktif fase validasi dan proteksi data pelanggan
 * **Poin Pembahasan**:
-  1. **Rotasi 60 Resep Terverifikasi**: Menghilangkan kebosanan rasa pelanggan jangka panjang dengan variasi hidangan bergizi seimbang.
+  1. **Rotasi 30 resep aktif fase validasi**: 30 resep aktif untuk validasi rasa dan operasi. 10 di antaranya menu Lampiran 1 UTS. Variasi mencegah bosan pada langganan jangka panjang.
   2. **Jadwal Tayang Berbasis Hari Riil**: Penjadwalan menu menggunakan daftar tanggal eksplisit (`availableDays`) yang sinkron dengan dapur sentral.
   3. **Proteksi Akses Tanpa Bocor Data**: Sesuai kebijakan data repositori, jika pengguna belum terautentikasi, antarmuka penukaran menu dilindungi modal login resmi tanpa menampilkan data dummy.
 * **Visual**: Tangkapan layar katalog menu dan modal otentikasi ([03_menu_catalog.png](file:///D:/Projects/Nutridaily/presentation_assets/03_menu_catalog.png)).
@@ -105,7 +105,7 @@ Dokumen ini adalah ringkasan konten, susunan visual, dan panduan presentasi untu
   1. **Struktur Paket Transparan**: Pilihan durasi 5 hari kerja (mingguan), 20 hari kerja (diskon 10%), dan 30 hari kerja (diskon 15%).
   2. **Pilihan Pembayaran Beragam**: Integrasi QRIS real-time (BCA, GoPay, OVO, ShopeePay), Virtual Account otomatis, dan kartu kredit.
   3. **Persetujuan Eksplisit UU PDP**: Kotak persetujuan pemrosesan data riwayat kesehatan fisik wajib dicentang sebelum pembayaran diproses.
-  4. **Simulasi Midtrans Sandbox**: Pengujian alur pembayaran yang aman menggunakan lingkungan sandbox Midtrans Snap.
+  4. **Simulasi Midtrans Sandbox**: Checkout membuat token `snap_token_mock` dan url sandbox vtweb. Tanpa SDK Midtrans dan tanpa pendebetan dana nyata. Rincian batasan ada di slide batasan demo.
 * **Visual**: Tangkapan layar formulir checkout ([06_checkout_page.png](file:///D:/Projects/Nutridaily/presentation_assets/06_checkout_page.png)).
 
 ---
@@ -134,7 +134,21 @@ Dokumen ini adalah ringkasan konten, susunan visual, dan panduan presentasi untu
 
 ---
 
-### Slide 12: Ringkasan Arsitektur Teknologi & Penutup
+### Slide 12: Batasan demo dan simulasi sandbox
+* **Kategori**: TRANSPARANSI TEKNIS
+* **Judul**: Batasan demo dan simulasi sandbox yang perlu diketahui
+* **Poin Pembahasan**:
+  1. **Token Midtrans mock tanpa charge asli**: checkout membuat `snap_token_mock` dan url sandbox vtweb. Tanpa SDK Midtrans dan tanpa pendebetan dana nyata.
+  2. **Verifikasi webhook dilonggarkan untuk demo**: fungsi `verifyMidtransSignature` selalu true. Wajib ganti ke validasi SHA-512 dengan server key sebelum rilis produksi.
+  3. **Notifikasi WhatsApp hanya log server**: fungsi `sendWhatsAppMessage` hanya mencatat ke log. Tanpa pemanggilan WhatsApp Cloud API dan tanpa pesan terkirim ke pelanggan.
+  4. **Kurir hanya enum teks tanpa integrasi API**: kolom `courierProvider` menyimpan string seperti GOSEND_INSTANT atau LALAMOVE. Tanpa integrasi API Lalamove, Gojek, atau Grab dan tanpa optimasi rute.
+  5. **Worker tanpa antrean Redis aktif**: processor BullMQ berjalan sebagai service NestJS biasa. Tanpa Queue, Worker, atau cron Redis aktif. Jadwal 05.00 WIB berjalan sebagai pemanggilan service langsung.
+  6. **Rencana tindak lanjut produksi**: aktivasi Midtrans production key dan webhook Xendit, aktivasi WhatsApp Cloud API dengan template resmi, integrasi API kurir dengan pelacakan dan bukti foto, serta antrean BullMQ di Redis 7.
+* **Visual**: Tabel dua kolom berisi status demo dan target produksi untuk lima modul di atas.
+
+---
+
+### Slide 13: Ringkasan Arsitektur Teknologi & Penutup
 * **Kategori**: KESIMPULAN & PENUTUP
 * **Judul**: Fondasi teknologi frontend yang kokoh & siap produksi
 * **Poin Pembahasan**:

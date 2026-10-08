@@ -15,6 +15,8 @@ export interface SubscriptionItem {
   status: 'ACTIVE' | 'PAUSED' | 'CANCELLED';
   paymentStatus?: 'SETTLEMENT' | 'CAPTURE' | 'PENDING' | 'DENY' | 'CANCEL' | 'EXPIRE' | 'REFUND';
   customerName?: string;
+  totalAmount?: number;
+  pricePerDay?: number;
   deliveryAddress: {
     id: string;
     label: string;
@@ -28,6 +30,7 @@ export interface SubscriptionItem {
     recipeTitle: string;
     status: string;
   }>;
+  allSubscriptions?: SubscriptionItem[];
 }
 
 function toDateKey(v: Date | string): string {
@@ -100,6 +103,8 @@ export class SubscriptionService {
       userId: row.userId,
       packageType: row.packageType,
       durationDays: row.durationDays,
+      totalAmount: row.totalAmount != null ? Number(row.totalAmount) : undefined,
+      pricePerDay: row.pricePerDay != null ? Number(row.pricePerDay) : undefined,
       startDate: toDateKey(row.startDate),
       endDate: toDateKey(row.endDate),
       status: row.status as SubscriptionItem['status'],
@@ -128,6 +133,23 @@ export class SubscriptionService {
       return rows.map((r) => this.mapPrismaSubscription(r));
     }
     return Array.from(this.subscriptions.values());
+  }
+
+  public async getUserSubscriptions(userId: string): Promise<SubscriptionItem[]> {
+    if (this.prisma) {
+      const rows = await this.prisma.subscription.findMany({
+        where: { userId },
+        include: {
+          deliveryAddress: true,
+          user: { select: { fullName: true } },
+          orders: { include: { recipe: { select: { title: true } } }, orderBy: { orderDate: 'asc' } },
+          payments: { select: { transactionStatus: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+      return rows.map((r) => this.mapPrismaSubscription(r));
+    }
+    return Array.from(this.subscriptions.values()).filter((s) => s.userId === userId);
   }
 
   public async getSubscription(subId: string): Promise<SubscriptionItem> {
@@ -161,6 +183,22 @@ export class SubscriptionService {
   public async getOrCreateUserSubscription(userId: string): Promise<SubscriptionItem> {
     if (this.prisma) {
       const existing = await this.prisma.subscription.findFirst({
+        where: { userId, status: 'ACTIVE' },
+        include: {
+          deliveryAddress: true,
+          user: { select: { fullName: true } },
+          orders: { include: { recipe: { select: { title: true } } }, orderBy: { orderDate: 'asc' } },
+          payments: { select: { transactionStatus: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+      const allSubs = await this.getUserSubscriptions(userId);
+      if (existing) {
+        const item = this.mapPrismaSubscription(existing);
+        item.allSubscriptions = allSubs;
+        return item;
+      }
+      const anySub = await this.prisma.subscription.findFirst({
         where: { userId },
         include: {
           deliveryAddress: true,
@@ -170,16 +208,25 @@ export class SubscriptionService {
         },
         orderBy: { createdAt: 'desc' },
       });
-      if (existing) return this.mapPrismaSubscription(existing);
-      return this.provisionPrismaSubscription(userId);
+      if (anySub) {
+        const item = this.mapPrismaSubscription(anySub);
+        item.allSubscriptions = allSubs;
+        return item;
+      }
+      const created = await this.provisionPrismaSubscription(userId);
+      created.allSubscriptions = [created];
+      return created;
     }
 
-    for (const sub of this.subscriptions.values()) {
-      if (sub.userId === userId) {
-        return sub;
-      }
+    const userSubs = Array.from(this.subscriptions.values()).filter((s) => s.userId === userId);
+    if (userSubs.length > 0) {
+      const active = userSubs.find((s) => s.status === 'ACTIVE') || userSubs[userSubs.length - 1];
+      active.allSubscriptions = userSubs;
+      return active;
     }
-    return this.provisionFileSubscription(userId);
+    const createdFile = this.provisionFileSubscription(userId);
+    createdFile.allSubscriptions = [createdFile];
+    return createdFile;
   }
 
   private async provisionPrismaSubscription(userId: string): Promise<SubscriptionItem> {
@@ -224,6 +271,20 @@ export class SubscriptionService {
         autoRenew: true,
         pricePerDay: 45000,
         totalAmount: 900000,
+      },
+    });
+
+    const invoiceNumber = `ND-INV-${subscription.id.replace(/[^a-zA-Z0-9]/g, '').slice(0, 8).toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`;
+    await this.prisma.payment.create({
+      data: {
+        userId,
+        subscriptionId: subscription.id,
+        invoiceNumber,
+        amount: subscription.totalAmount,
+        paymentType: 'MIDTRANS_SNAP',
+        transactionStatus: 'SETTLEMENT',
+        paidAt: new Date(),
+        snapToken: `snap_token_mock_${invoiceNumber}`,
       },
     });
 
@@ -275,6 +336,278 @@ export class SubscriptionService {
     this.persistStore();
     void firstDeliveryStr;
     void secondDeliveryStr;
+    return newSub;
+  }
+
+  public async activateSubscription(params: {
+    userId: string;
+    packageType: string;
+    durationDays: number;
+    totalAmount: number;
+    scheduleMode?: 'ROLLOVER' | 'PARALLEL';
+    deliveryAddress?: { label?: string; fullAddress?: string };
+    paymentStatus?: 'SETTLEMENT' | 'CAPTURE' | 'PENDING';
+  }): Promise<SubscriptionItem> {
+    if (this.prisma) {
+      let user = await this.prisma.user.findUnique({ where: { id: params.userId } });
+      if (!user) {
+        user = await this.prisma.user.findFirst();
+      }
+      const actualUserId = user?.id || params.userId;
+
+      let address = await this.prisma.address.findFirst({ where: { userId: actualUserId } });
+      if (!address) {
+        address = await this.prisma.address.create({
+          data: {
+            userId: actualUserId,
+            label: params.deliveryAddress?.label || 'Kantor SCBD Pacific Century Tower Lt. 18',
+            recipientName: user?.fullName || 'Joshua Abdiel',
+            phoneNumber: user?.phone || '+6281292570602',
+            fullAddress: params.deliveryAddress?.fullAddress || 'Jl. Jend. Sudirman Kav. 52-53, Jakarta Selatan',
+            latitude: -6.2254,
+            longitude: 106.8091,
+            isPrimary: true,
+          },
+        });
+      } else if (params.deliveryAddress?.fullAddress) {
+        address = await this.prisma.address.update({
+          where: { id: address.id },
+          data: {
+            label: params.deliveryAddress.label || address.label,
+            fullAddress: params.deliveryAddress.fullAddress,
+          },
+        });
+      }
+
+      let sub = await this.prisma.subscription.findFirst({
+        where: { userId: actualUserId, status: 'ACTIVE' },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      if (!sub) {
+        sub = await this.prisma.subscription.findFirst({
+          where: { userId: actualUserId },
+          orderBy: { createdAt: 'desc' },
+        });
+      }
+
+      const isParallel = params.scheduleMode === 'PARALLEL';
+      const isRollover = !isParallel && Boolean(sub && sub.status === 'ACTIVE' && sub.endDate && new Date(sub.endDate) > new Date());
+
+      let startDate: Date;
+      let endDate: Date;
+      let newDuration: number;
+      let newTotalAmount: number;
+
+      if (isParallel || !sub) {
+        startDate = new Date();
+        startDate.setDate(startDate.getDate() + 1);
+        endDate = new Date(startDate);
+        endDate.setDate(endDate.getDate() + Math.max(params.durationDays, 30));
+        newDuration = params.durationDays;
+        newTotalAmount = params.totalAmount;
+
+        sub = await this.prisma.subscription.create({
+          data: {
+            userId: actualUserId,
+            packageType: params.packageType as any,
+            durationDays: params.durationDays,
+            mealSchedule: 'LUNCH',
+            startDate,
+            endDate,
+            status: 'ACTIVE',
+            deliveryAddressId: address.id,
+            autoRenew: true,
+            pricePerDay: Math.round(params.totalAmount / params.durationDays),
+            totalAmount: params.totalAmount,
+          },
+        });
+      } else if (isRollover) {
+        // Langganan masih aktif: akumulasikan durasi dan nilai total pembayaran
+        startDate = new Date(sub.startDate);
+        const baseEndDate = new Date(sub.endDate);
+        endDate = new Date(baseEndDate);
+        endDate.setDate(endDate.getDate() + params.durationDays);
+        newDuration = (sub.durationDays || 0) + params.durationDays;
+        newTotalAmount = (Number(sub.totalAmount) || 0) + params.totalAmount;
+
+        sub = await this.prisma.subscription.update({
+          where: { id: sub.id },
+          data: {
+            packageType: params.packageType as any,
+            durationDays: newDuration,
+            totalAmount: newTotalAmount,
+            pricePerDay: Math.round(newTotalAmount / newDuration),
+            status: 'ACTIVE',
+            endDate,
+            deliveryAddressId: address.id,
+          },
+        });
+      } else {
+        startDate = new Date();
+        startDate.setDate(startDate.getDate() + 1);
+        endDate = new Date(startDate);
+        endDate.setDate(endDate.getDate() + Math.max(params.durationDays, 30));
+        newDuration = params.durationDays;
+        newTotalAmount = params.totalAmount;
+
+        sub = await this.prisma.subscription.update({
+          where: { id: sub.id },
+          data: {
+            packageType: params.packageType as any,
+            durationDays: params.durationDays,
+            totalAmount: params.totalAmount,
+            pricePerDay: Math.round(params.totalAmount / params.durationDays),
+            status: 'ACTIVE',
+            startDate,
+            endDate,
+            deliveryAddressId: address.id,
+          },
+        });
+      }
+
+      const allRecipes = await this.prisma.recipe.findMany({ where: { isActive: true } });
+      const matchedRecipes = allRecipes.filter((r) => r.category === params.packageType);
+      const recipePool = matchedRecipes.length > 0 ? matchedRecipes : allRecipes;
+
+      let hub = await this.prisma.kitchenHub.findFirst({ where: { isActive: true } });
+      if (!hub) {
+        hub = await this.prisma.kitchenHub.create({
+          data: {
+            name: 'Dapur Sentral Sudirman',
+            address: 'Jl. Jend. Sudirman Kav. 52-53, Jakarta Selatan',
+            latitude: -6.225,
+            longitude: 106.809,
+          },
+        });
+      }
+
+      let currDate: Date;
+      let startCount = 0;
+
+      if (isRollover) {
+        const lastOrder = await this.prisma.order.findFirst({
+          where: { subscriptionId: sub.id },
+          orderBy: { orderDate: 'desc' },
+        });
+        if (lastOrder) {
+          currDate = new Date(lastOrder.orderDate);
+          currDate.setUTCDate(currDate.getUTCDate() + 1);
+        } else {
+          currDate = new Date(startDate);
+        }
+        startCount = await this.prisma.order.count({
+          where: { subscriptionId: sub.id },
+        });
+      } else {
+        if (!isParallel) {
+          await this.prisma.order.deleteMany({
+            where: { subscriptionId: sub.id, status: 'SCHEDULED' },
+          });
+        }
+        currDate = new Date(startDate);
+      }
+
+      let added = 0;
+      while (added < Math.min(params.durationDays, 30)) {
+        const day = currDate.getUTCDay();
+        if (day !== 0 && day !== 6) {
+          const r = recipePool[(startCount + added) % Math.max(recipePool.length, 1)];
+          if (r) {
+            const ord = await this.prisma.order.create({
+              data: {
+                subscriptionId: sub.id,
+                userId: actualUserId,
+                orderDate: new Date(currDate),
+                mealType: 'LUNCH',
+                deliverySlot: 'LUNCH_SLOT_11_12',
+                recipeId: r.id,
+                addressId: address.id,
+                status: !isRollover && added === 0 ? 'PROCESSING' : 'SCHEDULED',
+              },
+            });
+
+            if (!isRollover && added < 3) {
+              const ticketSeq = 1000 + added + (isParallel ? Math.floor(Math.random() * 500) + 100 : 0);
+              await this.prisma.kDSTicket.create({
+                data: {
+                  orderId: ord.id,
+                  kitchenHubId: hub.id,
+                  ticketNumber: `TKT-${ord.orderDate.toISOString().slice(0, 10).replace(/-/g, '')}-${ticketSeq}`,
+                  status: added === 0 ? 'COOKING' : 'QUEUED',
+                  qrCodeUrl: r.qrVerificationCode ? `/verify/${r.qrVerificationCode}` : null,
+                  grammageDetails: {
+                    proteinGrams: 160,
+                    carbsGrams: 120,
+                    vegGrams: 150,
+                    sauceMl: 40,
+                    proteinItem: 'Dada Ayam Suwir',
+                    carbItem: 'Nasi Merah Organik',
+                    vegItem: 'Tumis Buncis & Wortel',
+                  },
+                },
+              });
+            }
+          }
+          added++;
+        }
+        currDate.setUTCDate(currDate.getUTCDate() + 1);
+      }
+
+      return this.getSubscription(sub.id);
+    }
+
+    const isFileParallel = params.scheduleMode === 'PARALLEL';
+    const subId = isFileParallel
+      ? `sub_${params.userId.replace(/[^a-zA-Z0-9]/g, '').slice(0, 8)}_${Date.now()}`
+      : `sub_${params.userId.replace(/[^a-zA-Z0-9]/g, '').slice(0, 12) || 'active'}`;
+    const existingSub = !isFileParallel ? this.subscriptions.get(subId) : undefined;
+    if (existingSub && existingSub.status === 'ACTIVE') {
+      existingSub.durationDays += params.durationDays;
+      const endD = new Date(existingSub.endDate);
+      endD.setDate(endD.getDate() + params.durationDays);
+      existingSub.endDate = endD.toISOString().split('T')[0];
+      this.subscriptions.set(subId, existingSub);
+      this.persistStore();
+      return existingSub;
+    }
+    const newSub: SubscriptionItem = {
+      id: subId,
+      userId: params.userId,
+      packageType: params.packageType,
+      durationDays: params.durationDays,
+      totalAmount: params.totalAmount,
+      pricePerDay: Math.round(params.totalAmount / params.durationDays),
+      startDate: new Date().toISOString().split('T')[0],
+      endDate: '2026-11-18',
+      status: 'ACTIVE',
+      paymentStatus: 'SETTLEMENT',
+      deliveryAddress: {
+        id: 'addr_scbd_01',
+        label: params.deliveryAddress?.label || 'Kantor SCBD Pacific Century Tower Lt. 18',
+        fullAddress: params.deliveryAddress?.fullAddress || 'Jl. Jend. Sudirman Kav. 52-53, Jakarta Selatan',
+      },
+      upcomingOrders: [
+        {
+          id: `ord_${subId}_01`,
+          orderDate: CutoffValidator.getNextDeliveryDateStr(new Date()),
+          mealType: 'LUNCH',
+          recipeId: 'm1',
+          recipeTitle: 'Dada ayam suwir kukus sambal matah kecombrang dengan nasi barley',
+          status: 'COOKING',
+        },
+        {
+          id: `ord_${subId}_02`,
+          orderDate: '2026-10-08',
+          mealType: 'LUNCH',
+          recipeId: 'm2',
+          recipeTitle: 'Medali tempe dan tahu organik dengan saus edamame tumbuk',
+          status: 'SCHEDULED',
+        },
+      ],
+    };
+    this.subscriptions.set(subId, newSub);
+    this.persistStore();
     return newSub;
   }
 

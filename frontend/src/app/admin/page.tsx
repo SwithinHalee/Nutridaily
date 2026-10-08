@@ -23,7 +23,7 @@ export default function AdminPortalNoticePage() {
             Portal admin & tele-gizi telah dipindahkan ke server backend internal
           </h1>
           <p className="text-sm text-warm-muted leading-relaxed">
-            Sesuai regulasi UU PDP No. 27/2022 tentang Perlindungan Data Pribadi Medis, portal rekam gizi klinis, segmentasi pelanggan RFM, dan repositori formularium 60 resep dijalankan pada server backend internal (Port 4000) dan terpisah dari portal pelanggan publik.
+            Sesuai regulasi UU PDP No. 27/2022 tentang Perlindungan Data Pribadi Medis, portal rekam gizi klinis, segmentasi pelanggan RFM, dan repositori formularium 30 resep aktif fase validasi dijalankan pada server backend internal (Port 4000) dan terpisah dari portal pelanggan publik.
           </p>
         </div>
 

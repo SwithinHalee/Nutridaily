@@ -1,4 +1,4 @@
-import { Controller, Post, Body, HttpCode, HttpStatus, UnauthorizedException } from '@nestjs/common';
+import { Controller, Post, Get, Body, HttpCode, HttpStatus, UnauthorizedException } from '@nestjs/common';
 import { PaymentsService, CreateSnapTransactionDto } from './payments.service';
 
 @Controller('api/v1/payments')
@@ -12,6 +12,28 @@ export class PaymentsController {
     return {
       statusCode: HttpStatus.CREATED,
       message: 'Token pembayaran Midtrans Snap berhasil dibuat.',
+      data: result,
+    };
+  }
+
+  @Post('checkout')
+  @HttpCode(HttpStatus.CREATED)
+  async checkout(@Body() body: any) {
+    const result = await this.paymentsService.processCheckout(body);
+    return {
+      statusCode: HttpStatus.CREATED,
+      message: 'Pembayaran langganan berhasil dikonfirmasi.',
+      data: result,
+    };
+  }
+
+  @Get('transactions')
+  @HttpCode(HttpStatus.OK)
+  async getTransactions() {
+    const result = await this.paymentsService.listTransactions();
+    return {
+      statusCode: HttpStatus.OK,
+      message: 'Daftar transaksi pembayaran berhasil dimuat.',
       data: result,
     };
   }
@@ -35,3 +57,4 @@ export class PaymentsController {
     };
   }
 }
+

@@ -474,10 +474,10 @@ export default function AccountDashboardPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex flex-wrap items-center gap-2 shrink-0 w-full sm:w-auto">
           <Link
             href="/dashboard"
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-warm-surface border border-warm-border hover:bg-tebu-100 rounded-md text-xs font-semibold text-warm-black transition-colors shadow-natural shrink-0"
+            className="flex-1 sm:flex-none justify-center inline-flex items-center gap-1.5 px-3.5 py-2.5 min-h-[40px] bg-warm-surface border border-warm-border hover:bg-tebu-100 rounded-md text-xs font-semibold text-warm-black transition-colors shadow-natural shrink-0"
           >
             <CalendarCheck className="w-3.5 h-3.5 text-forest" />
             <span>Atur jadwal langganan</span>
@@ -488,7 +488,7 @@ export default function AccountDashboardPage() {
               await logout();
               window.location.href = '/account/login';
             }}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-warm-surface border border-warm-border hover:bg-tebu-100 rounded-md text-xs font-semibold text-warm-muted hover:text-terracotta transition-colors shadow-natural shrink-0 cursor-pointer"
+            className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 min-h-[40px] bg-warm-surface border border-warm-border hover:bg-tebu-100 rounded-md text-xs font-semibold text-warm-muted hover:text-terracotta transition-colors shadow-natural shrink-0 cursor-pointer"
             title="Keluar dari akun Anda"
           >
             <LogOut className="w-3.5 h-3.5" />
@@ -518,7 +518,7 @@ export default function AccountDashboardPage() {
           <button
             type="button"
             onClick={() => setFeedbackMessage(null)}
-            className="text-current opacity-70 hover:opacity-100"
+            className="text-current opacity-70 hover:opacity-100 p-1"
             aria-label="Tutup notifikasi"
           >
             <X className="w-3.5 h-3.5" />
@@ -569,7 +569,7 @@ export default function AccountDashboardPage() {
               role="tab"
               aria-selected={isActive}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`p-3 rounded-[14px] border text-left transition-all flex flex-col justify-between gap-2.5 cursor-pointer shadow-natural-sm ${
+              className={`p-2.5 sm:p-3 rounded-[14px] border text-left transition-all flex flex-col justify-between gap-2 cursor-pointer shadow-natural-sm min-h-[96px] sm:min-h-[104px] ${
                 isActive
                   ? 'bg-forest text-tebu-50 border-forest shadow-natural ring-2 ring-forest/20'
                   : 'bg-warm-surface text-warm-black border-warm-border hover:bg-tebu-100 hover:border-warm-neutral'
@@ -1057,6 +1057,11 @@ export default function AccountDashboardPage() {
                 </h2>
                 <p className="text-xs text-warm-muted mt-0.5">
                   Menonaktifkan akun Anda secara permanen. Seluruh langganan aktif akan dihentikan dan data login dicabut.
+                  Pelajari hak akses, koreksi, dan penghapusan data di{' '}
+                  <Link href="/privacy" className="font-semibold text-forest hover:text-forest-hover underline">
+                    kebijakan privasi dan kontak DPO
+                  </Link>
+                  .
                 </p>
               </div>
             </div>
@@ -1109,7 +1114,7 @@ export default function AccountDashboardPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-end gap-2 pt-2">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2 pt-2">
                   <button
                     type="button"
                     onClick={() => {
@@ -1118,14 +1123,14 @@ export default function AccountDashboardPage() {
                       setDeleteConfirmationPhrase('');
                       setDeleteError(null);
                     }}
-                    className="px-4 py-2 bg-warm-surface border border-warm-border hover:bg-tebu-100 text-xs font-medium rounded-md transition-colors cursor-pointer"
+                    className="px-4 py-2.5 bg-warm-surface border border-warm-border hover:bg-tebu-100 text-xs font-medium rounded-md transition-colors cursor-pointer min-h-[44px] flex items-center justify-center"
                   >
                     Batalkan
                   </button>
                   <button
                     type="submit"
                     disabled={deletingAccount || deleteConfirmationPhrase.trim() !== 'HAPUS AKUN SAYA'}
-                    className="px-4 py-2 bg-terracotta hover:bg-terracotta-hover text-tebu-50 text-xs font-semibold rounded-md transition-colors shadow-natural disabled:opacity-60 cursor-pointer inline-flex items-center gap-1.5"
+                    className="px-4 py-2.5 bg-terracotta hover:bg-terracotta-hover text-tebu-50 text-xs font-semibold rounded-md transition-colors shadow-natural disabled:opacity-60 cursor-pointer inline-flex items-center justify-center gap-1.5 min-h-[44px]"
                   >
                     {deletingAccount && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                     <span>{deletingAccount ? 'Menonaktifkan akun...' : 'Konfirmasi hapus akun permanen'}</span>
@@ -1217,23 +1222,23 @@ export default function AccountDashboardPage() {
               <p className="text-warm-black/90 leading-relaxed font-mono text-[11px] bg-warm-surface p-3 rounded border border-warm-border">
                 {healthProfile.encryptedNotesDecrypted}
               </p>
-              <div className="flex items-center justify-between text-[11px] text-warm-muted pt-1">
-                <span>Penanggung jawab: <strong className="text-warm-black">{healthProfile.doctorInCharge}</strong></span>
-                <span className="font-mono">{healthProfile.sipNumber}</span>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-[11px] text-warm-muted pt-1">
+                <span className="break-words">Penanggung jawab: <strong className="text-warm-black font-semibold">{healthProfile.doctorInCharge}</strong></span>
+                <span className="font-mono shrink-0">{healthProfile.sipNumber}</span>
               </div>
             </div>
           </div>
 
-          <div className="pt-2 flex justify-between items-center">
+          <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <Link
               href="/#calculator"
-              className="inline-flex items-center gap-1.5 px-4 py-2 bg-warm-black hover:bg-forest text-tebu-50 text-xs font-semibold rounded-md transition-colors shadow-natural"
+              className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-warm-black hover:bg-forest text-tebu-50 text-xs font-semibold rounded-md transition-colors shadow-natural min-h-[44px] w-full sm:w-auto"
             >
               <span>Perbarui metrik tubuh di kalkulator</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              <ArrowRight className="w-3.5 h-3.5 shrink-0" />
             </Link>
 
-            <span className="text-[11px] text-warm-muted">
+            <span className="text-[11px] text-warm-muted break-words">
               Terverifikasi aman oleh Kementerian Kesehatan RI
             </span>
           </div>
@@ -1257,14 +1262,14 @@ export default function AccountDashboardPage() {
           <div className="divide-y divide-warm-border text-xs">
             {invoices.map((inv) => (
               <div key={inv.invoiceNumber} className="py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div className="space-y-0.5">
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono font-semibold text-warm-black">{inv.invoiceNumber}</span>
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-forest-subtle text-forest">
+                <div className="space-y-0.5 min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-mono font-semibold text-warm-black break-all">{inv.invoiceNumber}</span>
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-forest-subtle text-forest shrink-0">
                       {inv.status}
                     </span>
                   </div>
-                  <p className="text-warm-muted text-[11px]">
+                  <p className="text-warm-muted text-[11px] break-words">
                     {inv.plan} ({inv.cycle}) • Terbit: {inv.date}
                   </p>
                 </div>
@@ -1384,9 +1389,9 @@ export default function AccountDashboardPage() {
 
       {/* Modal: Tambah Alamat Baru */}
       {isAddAddressModalOpen && (
-        <div className="fixed inset-0 z-50 bg-warm-black/40 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-warm-surface border border-warm-border rounded-[18px] max-w-lg w-full max-h-[90vh] flex flex-col shadow-natural-lg overflow-hidden">
-            <div className="p-6 pb-3 border-b border-warm-border flex justify-between items-start shrink-0">
+        <div className="fixed inset-0 z-50 bg-warm-black/40 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+          <div className="bg-warm-surface border border-warm-border rounded-[18px] max-w-lg w-full max-h-[85dvh] flex flex-col shadow-natural-lg overflow-hidden">
+            <div className="p-4 sm:p-6 pb-3 border-b border-warm-border flex justify-between items-start shrink-0">
               <div>
                 <h3 className="font-display font-semibold text-base text-warm-black">
                   Tambah alamat pengantaran baru
@@ -1406,7 +1411,7 @@ export default function AccountDashboardPage() {
             </div>
 
             <form onSubmit={handleAddNewAddress} className="flex flex-col flex-1 min-h-0 overflow-hidden">
-              <div className="p-6 py-4 overflow-y-auto custom-pill-scrollbar flex-1 space-y-3.5">
+              <div className="p-4 sm:p-6 py-4 overflow-y-auto custom-pill-scrollbar flex-1 space-y-3.5">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label htmlFor="new-address-label" className="block text-xs font-semibold text-warm-black mb-1.5">
@@ -1554,7 +1559,7 @@ export default function AccountDashboardPage() {
                           <span className="font-semibold text-warm-black shrink-0">Koordinat pin:</span>
                         </div>
 
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
                           <div className="flex items-center rounded border border-warm-border bg-tebu-50 px-2 py-1 text-xs font-mono shadow-natural">
                             <span className="text-[10px] text-warm-stone font-sans mr-1.5 select-none">Lat</span>
                             <input
@@ -1597,7 +1602,7 @@ export default function AccountDashboardPage() {
                           href={`https://www.google.com/maps/search/?api=1&query=${pinnedCoordinates.lat},${pinnedCoordinates.lng}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="w-full sm:w-auto py-2 px-3 rounded-lg bg-tebu-50 hover:bg-tebu-100 border border-warm-border text-forest text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 shadow-natural"
+                          className="w-full sm:w-auto py-2.5 px-3 rounded-lg bg-tebu-50 hover:bg-tebu-100 border border-warm-border text-forest text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 shadow-natural min-h-[40px]"
                         >
                           <ExternalLink className="w-3.5 h-3.5 text-forest shrink-0" />
                           <span>Buka Google Maps</span>
@@ -1628,17 +1633,17 @@ export default function AccountDashboardPage() {
               </div>
 
               {/* Sticky Action Footer */}
-              <div className="p-4 px-6 border-t border-warm-border bg-warm-surface flex items-center gap-2 shrink-0">
+              <div className="p-4 sm:px-6 border-t border-warm-border bg-warm-surface flex items-center gap-2 shrink-0">
                 <button
                   type="submit"
-                  className="flex-1 py-2.5 px-4 rounded-md bg-forest hover:bg-forest-hover text-tebu-50 text-xs font-semibold tracking-tight transition-colors shadow-natural cursor-pointer"
+                  className="flex-1 py-3 px-4 rounded-md bg-forest hover:bg-forest-hover text-tebu-50 text-xs font-semibold tracking-tight transition-colors shadow-natural cursor-pointer min-h-[44px] flex items-center justify-center"
                 >
                   Simpan alamat baru
                 </button>
                 <button
                   type="button"
                   onClick={() => setIsAddAddressModalOpen(false)}
-                  className="py-2.5 px-4 rounded-md bg-warm-surface border border-warm-border hover:bg-tebu-100 text-warm-muted hover:text-warm-black text-xs font-medium transition-colors cursor-pointer"
+                  className="py-3 px-4 rounded-md bg-warm-surface border border-warm-border hover:bg-tebu-100 text-warm-muted hover:text-warm-black text-xs font-medium transition-colors cursor-pointer min-h-[44px] flex items-center justify-center"
                 >
                   Batalkan
                 </button>
@@ -1650,8 +1655,8 @@ export default function AccountDashboardPage() {
 
       {/* Modal: Lihat Rincian Faktur Resmi */}
       {selectedInvoice && (
-        <div className="fixed inset-0 z-50 bg-warm-black/40 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-warm-surface border border-warm-border rounded-[18px] max-w-lg w-full max-h-[90vh] overflow-y-auto custom-pill-scrollbar p-6 space-y-4 shadow-natural-lg">
+        <div className="fixed inset-0 z-50 bg-warm-black/40 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+          <div className="bg-warm-surface border border-warm-border rounded-[18px] max-w-lg w-full max-h-[85dvh] overflow-y-auto custom-pill-scrollbar p-5 sm:p-6 space-y-4 shadow-natural-lg">
             <div className="flex justify-between items-start pb-3 border-b border-warm-border">
               <div>
                 <span className="eyebrow text-forest">Faktur pembayaran resmi</span>
@@ -1725,16 +1730,16 @@ export default function AccountDashboardPage() {
             </div>
 
             {/* Actions */}
-            <div className="pt-2 flex items-center justify-between gap-2">
+            <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
               <span className="text-[10px] text-warm-stone font-mono">
                 Hash sertifikasi: SHA256-ND-{(selectedInvoice.invoiceNumber).replace(/[^0-9]/g, '')}
               </span>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 w-full sm:w-auto">
                 <button
                   type="button"
                   onClick={() => window.print()}
-                  className="px-3 py-2 rounded-md bg-warm-surface border border-warm-border hover:bg-tebu-100 text-warm-black text-xs font-semibold transition-colors flex items-center gap-1.5 shadow-natural-sm cursor-pointer"
+                  className="flex-1 sm:flex-none justify-center px-3.5 py-2.5 rounded-md bg-warm-surface border border-warm-border hover:bg-tebu-100 text-warm-black text-xs font-semibold transition-colors flex items-center gap-1.5 shadow-natural-sm cursor-pointer min-h-[44px]"
                 >
                   <Printer className="w-3.5 h-3.5 text-forest" />
                   <span>Cetak</span>
@@ -1745,7 +1750,7 @@ export default function AccountDashboardPage() {
                     showToast('success', `Mengunduh berkas PDF resmi untuk ${selectedInvoice.invoiceNumber}...`);
                     setSelectedInvoice(null);
                   }}
-                  className="px-3.5 py-2 rounded-md bg-forest hover:bg-forest-hover text-tebu-50 text-xs font-semibold transition-colors shadow-natural flex items-center gap-1.5 cursor-pointer"
+                  className="flex-1 sm:flex-none justify-center px-4 py-2.5 rounded-md bg-forest hover:bg-forest-hover text-tebu-50 text-xs font-semibold transition-colors shadow-natural flex items-center gap-1.5 cursor-pointer min-h-[44px]"
                 >
                   <Download className="w-3.5 h-3.5" />
                   <span>Unduh salinan PDF</span>

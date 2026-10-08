@@ -19,7 +19,7 @@ export function HeaderAuthStatus() {
     return (
       <Link
         href="/account"
-        className="inline-flex items-center gap-1.5 text-xs font-semibold bg-forest text-tebu-50 hover:bg-forest-hover px-3.5 py-2 rounded-md transition-colors shadow-natural"
+        className="inline-flex items-center gap-1.5 text-xs font-semibold bg-forest text-tebu-50 hover:bg-forest-hover px-3.5 py-2 rounded-md transition-colors shadow-natural min-h-[38px]"
       >
         <User className="w-3.5 h-3.5" aria-hidden="true" />
         <span className="truncate max-w-[120px]">{firstName}</span>
@@ -31,14 +31,14 @@ export function HeaderAuthStatus() {
     <div className="flex items-center gap-2">
       <Link
         href="/account/login"
-        className="inline-flex items-center gap-1 text-xs font-semibold text-warm-neutral hover:text-forest px-3 py-2 rounded-md transition-colors"
+        className="inline-flex items-center gap-1 text-xs font-semibold text-warm-neutral hover:text-forest px-3 py-2 rounded-md transition-colors min-h-[38px]"
       >
         <LogIn className="w-3.5 h-3.5" aria-hidden="true" />
         <span>Masuk</span>
       </Link>
       <Link
         href="/account/register"
-        className="text-xs font-semibold bg-forest text-tebu-50 hover:bg-forest-hover px-3.5 py-2 rounded-md transition-colors shadow-natural"
+        className="inline-flex items-center text-xs font-semibold bg-forest text-tebu-50 hover:bg-forest-hover px-3.5 py-2 rounded-md transition-colors shadow-natural min-h-[38px]"
       >
         Daftar
       </Link>

@@ -139,14 +139,28 @@ export class KDSService {
     if (!this.prisma) return;
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
-    const tomorrowStart = new Date(todayStart);
-    tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+    const tomorrowEnd = new Date(todayStart);
+    tomorrowEnd.setDate(tomorrowEnd.getDate() + 2); // covers today and tomorrow batches
 
-    const paidOrders = await this.prisma.order.findMany({
+    const activeOrders = await this.prisma.order.findMany({
       where: {
-        orderDate: { gte: todayStart, lt: tomorrowStart },
-        status: { in: ['SCHEDULED', 'PROCESSING', 'COOKING', 'READY_TO_DISPATCH', 'IN_TRANSIT'] },
-        subscription: { payments: { some: { transactionStatus: { in: PAID_STATUSES as any } } } },
+        OR: [
+          // Order aktif hari ini atau besok yang siap dipersiapkan dapur
+          {
+            orderDate: { gte: todayStart, lt: tomorrowEnd },
+            status: { in: ['SCHEDULED', 'PROCESSING', 'COOKING', 'READY_TO_DISPATCH', 'IN_TRANSIT'] },
+            subscription: {
+              OR: [
+                { status: 'ACTIVE' },
+                { payments: { some: { transactionStatus: { in: PAID_STATUSES as any } } } },
+              ],
+            },
+          },
+          // Atau order yang sedang berlangsung di dapur (belum selesai terkirim)
+          {
+            status: { in: ['PROCESSING', 'COOKING', 'READY_TO_DISPATCH'] },
+          },
+        ],
       },
       include: { recipe: true, user: true, address: true, kdsTicket: true, subscription: true },
     });
@@ -163,7 +177,7 @@ export class KDSService {
       });
     }
 
-    for (const order of paidOrders) {
+    for (const order of activeOrders) {
       if (order.kdsTicket) continue;
       const seq = Math.floor(1000 + Math.random() * 9000);
       await this.prisma.kDSTicket.create({
@@ -183,11 +197,16 @@ export class KDSService {
     if (!this.prisma) return [];
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
-    const tomorrowStart = new Date(todayStart);
-    tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+    const tomorrowEnd = new Date(todayStart);
+    tomorrowEnd.setDate(tomorrowEnd.getDate() + 2);
 
     const rows = await this.prisma.kDSTicket.findMany({
-      where: { order: { orderDate: { gte: todayStart, lt: tomorrowStart } } },
+      where: {
+        OR: [
+          { order: { orderDate: { gte: todayStart, lt: tomorrowEnd } } },
+          { status: { in: ['QUEUED', 'COOKING', 'PLATED', 'PACKED'] } },
+        ],
+      },
       include: { order: { include: { user: true, recipe: true, subscription: true } } },
       orderBy: { queuedAt: 'asc' },
     });

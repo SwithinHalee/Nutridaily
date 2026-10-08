@@ -58,7 +58,7 @@ export class InMemoryAuthRepository implements AuthRepository {
     }
     const now = new Date();
     const user: UserRecord = {
-      id: randomUUID(),
+      id: (data as any).id || randomUUID(),
       email: data.email,
       phone: data.phone,
       passwordHash: data.passwordHash,
@@ -72,6 +72,8 @@ export class InMemoryAuthRepository implements AuthRepository {
       lockedUntil: null,
       lastLoginAt: null,
       deletedAt: null,
+      dataConsentAt: data.dataConsentAt ?? null,
+      dataConsentVersion: data.dataConsentVersion ?? null,
       createdAt: now,
       updatedAt: now,
     };

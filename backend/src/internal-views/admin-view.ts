@@ -9,7 +9,11 @@ export function renderAdminView(): string {
   <link rel="shortcut icon" href="/favicon.ico">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600..700&family=Manrope:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600..700&family=Manrope:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
+  <noscript>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600..700&family=Manrope:wght@400;500;600;700&display=swap">
+  </noscript>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -57,7 +61,7 @@ export function renderAdminView(): string {
       pointer-events: none;
       opacity: 0.06;
       background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-      z-index: 99;
+      z-index: 1;
     }
     h1, h2, h3 { text-wrap: balance; font-weight: 600; letter-spacing: -0.015em; }
     p { text-wrap: pretty; }
@@ -184,6 +188,7 @@ export function renderAdminView(): string {
       flex-shrink: 0;
       gap: 0;
       border-bottom: none;
+      z-index: 50;
     }
 
     .sidebar-meta {
@@ -746,31 +751,120 @@ export function renderAdminView(): string {
       margin-left: auto;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
       background: #F4F0E8;
-      border-radius: 4px;
-      padding: 4px 8px;
+      border: 1px solid #E5DFD5;
+      border-radius: 6px;
+      padding: 3px 6px 3px 8px;
       color: #6E665E;
     }
-    .fx-search input { border: none; background: transparent; outline: none; font-size: 12px; font-family: inherit; color: #1A1310; width: 148px; }
+    .fx-search-cat {
+      border: none;
+      border-right: 1px solid #DED8CE;
+      background: transparent;
+      outline: none;
+      font-size: 11px;
+      font-family: inherit;
+      font-weight: 600;
+      color: #4A3E39;
+      padding: 2px 6px 2px 0;
+      cursor: pointer;
+      max-width: 116px;
+    }
+    .fx-search-cat:focus { color: #1A1310; }
+    .fx-search input {
+      border: none;
+      background: transparent;
+      outline: none;
+      font-size: 12px;
+      font-family: inherit;
+      color: #1A1310;
+      width: 125px;
+    }
+    .fx-search input::placeholder { color: #8C827A; }
+    .fx-search-clear {
+      border: none;
+      background: transparent;
+      padding: 2px 4px;
+      color: #8C827A;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+      line-height: 1;
+    }
+    .fx-search-clear:hover { color: #1A1310; background: #E5DFD5; }
     .fx-search-pop {
       position: absolute;
       top: calc(100% + 6px);
       right: 0;
-      width: 280px;
-      max-height: 320px;
+      width: 320px;
+      max-height: 380px;
       overflow-y: auto;
       background: var(--surface);
       border: 1px solid var(--border-warm);
       border-radius: 10px;
       box-shadow: 0 10px 30px rgba(26, 19, 16, 0.18);
-      padding: 6px;
+      padding: 8px;
       z-index: 120;
       scrollbar-width: thin;
       scrollbar-color: #D4CCC0 transparent;
     }
     .fx-search-pop::-webkit-scrollbar { width: 5px; background: transparent; }
     .fx-search-pop::-webkit-scrollbar-thumb { background: #D4CCC0; border-radius: 9999px; }
+    .fx-pop-header {
+      padding: 2px 2px 8px;
+      border-bottom: 1px solid var(--border-warm);
+      margin-bottom: 6px;
+    }
+    .fx-pop-cats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-bottom: 6px;
+    }
+    .fx-pop-cat-btn {
+      border: 1px solid #DED8CE;
+      background: #FDFBF7;
+      border-radius: 9999px;
+      padding: 3px 7px;
+      font-size: 10px;
+      font-family: inherit;
+      font-weight: 600;
+      color: #6E665E;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s ease;
+    }
+    .fx-pop-cat-btn:hover {
+      border-color: #2C4A3E;
+      color: #1A1310;
+      background: #F4F0E8;
+    }
+    .fx-pop-cat-btn.active {
+      background: #2C4A3E;
+      border-color: #2C4A3E;
+      color: #FDFBF7;
+    }
+    .fx-pop-cat-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      display: inline-block;
+      flex-shrink: 0;
+    }
+    .fx-pop-count {
+      font-size: 10px;
+      color: var(--text-muted);
+      font-weight: 500;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 2px;
+    }
     .fx-pop-item {
       display: flex;
       flex-direction: column;
@@ -1101,7 +1195,7 @@ export function renderAdminView(): string {
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
           <span>CRM tele-gizi</span>
         </button>
-        <button type="button" role="tab" id="tabbtn-recipes" aria-selected="false" aria-controls="tab-recipes" class="tab-item" data-tab="recipes" onclick="switchTab('recipes', this)" title="Katalog resep gizi (60)">
+        <button type="button" role="tab" id="tabbtn-recipes" aria-selected="false" aria-controls="tab-recipes" class="tab-item" data-tab="recipes" onclick="switchTab('recipes', this)" title="Katalog resep gizi (30)">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
           <span>Resep</span>
         </button>
@@ -1170,209 +1264,84 @@ export function renderAdminView(): string {
       </div>
     </div>
 
-    <!-- Tab 2: 60 Recipes Catalog with Visual Food Photography -->
+    <!-- Tab 2: Formularium Menu Gizi (Membaca dinamis dari database) -->
     <div id="tab-recipes" class="tab-content">
-      <div style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+      <div style="margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
         <div>
-          <h2 style="font-size: 15px; font-weight: 700;">Repositori Formularium 60 Menu Gizi</h2>
-          <p style="font-size: 12px; color: var(--text-muted);">Sertifikasi uji independen SIG Lab & Sucofindo.</p>
+          <h2 id="recipes-catalog-title" style="font-size: 15px; font-weight: 700;">Repositori Formularium Menu Gizi</h2>
+          <p id="recipes-catalog-sub" style="font-size: 12px; color: var(--text-muted);">Sertifikasi uji independen SIG Lab & Sucofindo. Seluruh menu tersimpan di database.</p>
+        </div>
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+          <input type="text" id="recipe-search-input" class="table-search" placeholder="Cari nama menu, SKU, atau kategori..." oninput="filterCatalogRecipes(this.value)" style="width:260px; margin:0;">
+          <button class="btn-ghost" type="button" onclick="loadCatalogRecipes(true)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+            <span>Muat ulang</span>
+          </button>
         </div>
       </div>
 
-      <div class="recipe-grid">
-        <!-- Recipe 1: Salmon -->
-        <div class="recipe-card">
-          <div class="recipe-img-box">
-            <img src="/images/meals/salmon_meal.jpg" alt="Sous-Vide Atlantic Salmon" loading="lazy" />
-          </div>
-          <div class="recipe-body">
-            <div class="recipe-top">
-              <span class="recipe-sku">ND-WL-001</span>
-              <span class="lab-tag">SIG LAB TERVERIFIKASI</span>
-            </div>
-            <div class="recipe-name">Sous-Vide Atlantic Salmon with Wild Red Rice & Asparagus</div>
-            <p style="font-size: 11px; color: var(--text-muted);">Kategori: Weight Loss (Lean & Sculpt)</p>
-            <div class="macro-bar">
-              <span class="macro-cal">440 kkal</span>
-              <span class="macro-p">P: 42g</span>
-              <span class="macro-c">C: 36g</span>
-              <span class="macro-f">F: 14g</span>
-              <span style="color: var(--forest);">GI: 42</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Recipe 2: Wagyu -->
-        <div class="recipe-card">
-          <div class="recipe-img-box">
-            <img src="/images/meals/wagyu_meal.jpg" alt="Sous-Vide Wagyu Rump" loading="lazy" />
-          </div>
-          <div class="recipe-body">
-            <div class="recipe-top">
-              <span class="recipe-sku">ND-MG-002</span>
-              <span class="lab-tag">SUCOFINDO TERVERIFIKASI</span>
-            </div>
-            <div class="recipe-name">Sous-Vide Wagyu Rump 9+ with Truffle Mashed Cauliflower</div>
-            <p style="font-size: 11px; color: var(--text-muted);">Kategori: Muscle Gain (Fit & Build)</p>
-            <div class="macro-bar">
-              <span class="macro-cal">680 kkal</span>
-              <span class="macro-p">P: 58g</span>
-              <span class="macro-c">C: 42g</span>
-              <span class="macro-f">F: 28g</span>
-              <span style="color: var(--forest);">GI: 38</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Recipe 3: Chicken -->
-        <div class="recipe-card">
-          <div class="recipe-img-box">
-            <img src="/images/meals/chicken_meal.jpg" alt="Slow-Braised Chicken Breast" loading="lazy" />
-          </div>
-          <div class="recipe-body">
-            <div class="recipe-top">
-              <span class="recipe-sku">ND-TD-003</span>
-              <span class="lab-tag">SIG LAB TERVERIFIKASI</span>
-            </div>
-            <div class="recipe-name">Slow-Braised Free-Range Chicken Breast with Herb Quinoa</div>
-            <p style="font-size: 11px; color: var(--text-muted);">Kategori: Therapeutic Diet (DASH & Diabetes)</p>
-            <div class="macro-bar">
-              <span class="macro-cal">490 kkal</span>
-              <span class="macro-p">P: 46g</span>
-              <span class="macro-c">C: 40g</span>
-              <span class="macro-f">F: 12g</span>
-              <span style="color: var(--forest);">GI: 44</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Recipe 4: Tofu & Tempeh Medallion -->
-        <div class="recipe-card">
-          <div class="recipe-img-box">
-            <img src="/images/meals/salmon_meal.jpg" alt="Pan-Seared Organic Tofu" loading="lazy" />
-          </div>
-          <div class="recipe-body">
-            <div class="recipe-top">
-              <span class="recipe-sku">ND-MD-004</span>
-              <span class="lab-tag">SIG LAB TERVERIFIKASI</span>
-            </div>
-            <div class="recipe-name">Pan-Seared Organic Tofu & Tempeh Medallion with Edamame Puree</div>
-            <p style="font-size: 11px; color: var(--text-muted);">Kategori: Maintenance (Vitality Daily)</p>
-            <div class="macro-bar">
-              <span class="macro-cal">420 kkal</span>
-              <span class="macro-p">P: 32g</span>
-              <span class="macro-c">C: 44g</span>
-              <span class="macro-f">F: 11g</span>
-              <span style="color: var(--forest);">GI: 35</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Recipe 5: Atlantic Salmon Rosemary -->
-        <div class="recipe-card">
-          <div class="recipe-img-box">
-            <img src="/images/meals/salmon_rosemary.jpg" alt="Atlantic Salmon Panggang Rosemary" loading="lazy" />
-          </div>
-          <div class="recipe-body">
-            <div class="recipe-top">
-              <span class="recipe-sku">ND-WL-005</span>
-              <span class="lab-tag">SIG LAB TERVERIFIKASI</span>
-            </div>
-            <div class="recipe-name">Atlantic salmon panggang rosemary dengan salad kentang ungu</div>
-            <p style="font-size: 11px; color: var(--text-muted);">Kategori: Weight loss (lean & sculpt)</p>
-            <div class="macro-bar">
-              <span class="macro-cal">452 kkal</span>
-              <span class="macro-p">P: 42g</span>
-              <span class="macro-c">C: 35g</span>
-              <span class="macro-f">F: 15g</span>
-              <span style="color: var(--forest);">GI: 40</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Recipe 6: Wagyu Chimichurri -->
-        <div class="recipe-card">
-          <div class="recipe-img-box">
-            <img src="/images/meals/wagyu_striploin.jpg" alt="Daging Wagyu Striploin Bakar Chimichurri" loading="lazy" />
-          </div>
-          <div class="recipe-body">
-            <div class="recipe-top">
-              <span class="recipe-sku">ND-MG-006</span>
-              <span class="lab-tag">SUCOFINDO TERVERIFIKASI</span>
-            </div>
-            <div class="recipe-name">Daging wagyu striploin bakar chimichurri dengan jagung manis bakar</div>
-            <p style="font-size: 11px; color: var(--text-muted);">Kategori: Muscle gain (fit & build)</p>
-            <div class="macro-bar">
-              <span class="macro-cal">695 kkal</span>
-              <span class="macro-p">P: 54g</span>
-              <span class="macro-c">C: 44g</span>
-              <span class="macro-f">F: 29g</span>
-              <span style="color: var(--forest);">GI: 39</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Recipe 7: Ayam Panggang Bumbu Rujak -->
-        <div class="recipe-card">
-          <div class="recipe-img-box">
-            <img src="/images/meals/chicken_rujak.jpg" alt="Dada Ayam Bakar Bumbu Rujak Kelapa Muda" loading="lazy" />
-          </div>
-          <div class="recipe-body">
-            <div class="recipe-top">
-              <span class="recipe-sku">ND-TD-007</span>
-              <span class="lab-tag">SIG LAB TERVERIFIKASI</span>
-            </div>
-            <div class="recipe-name">Dada ayam bakar bumbu rujak kelapa muda dengan tumis buncis baby</div>
-            <p style="font-size: 11px; color: var(--text-muted);">Kategori: Therapeutic DASH (low sodium)</p>
-            <div class="macro-bar">
-              <span class="macro-cal">475 kkal</span>
-              <span class="macro-p">P: 44g</span>
-              <span class="macro-c">C: 37g</span>
-              <span class="macro-f">F: 13g</span>
-              <span style="color: var(--forest);">GI: 43</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Recipe 8: Ayam Suwir Sambal Matah -->
-        <div class="recipe-card">
-          <div class="recipe-img-box">
-            <img src="/images/meals/chicken_matah.jpg" alt="Dada Ayam Suwir Kukus Sambal Matah" loading="lazy" />
-          </div>
-          <div class="recipe-body">
-            <div class="recipe-top">
-              <span class="recipe-sku">ND-VT-008</span>
-              <span class="lab-tag">SIG LAB TERVERIFIKASI</span>
-            </div>
-            <div class="recipe-name">Dada ayam suwir kukus sambal matah kecombrang dengan nasi barley</div>
-            <p style="font-size: 11px; color: var(--text-muted);">Kategori: Vitality daily (metabolic balance)</p>
-            <div class="macro-bar">
-              <span class="macro-cal">445 kkal</span>
-              <span class="macro-p">P: 43g</span>
-              <span class="macro-c">C: 38g</span>
-              <span class="macro-f">F: 12g</span>
-              <span style="color: var(--forest);">GI: 41</span>
-            </div>
-          </div>
-        </div>
+      <div id="recipes-grid" class="recipe-grid">
+        <div class="skeleton" style="height:140px;"></div>
+        <div class="skeleton" style="height:140px;"></div>
+        <div class="skeleton" style="height:140px;"></div>
       </div>
     </div>
 
     <!-- Tab 3: Transaction Stream & Webhook -->
     <div id="tab-transactions" class="tab-content">
       <div style="background: var(--surface); border: 1px solid var(--border-warm); border-radius: 12px; padding: 18px; display: flex; flex-direction: column; gap: 14px;">
-        <div>
-          <h2 style="font-size: 15px; font-weight: 700;">Pemantauan Arus Transaksi & Webhook Midtrans</h2>
-          <p style="font-size: 12px; color: var(--text-muted);">Audit log sinkronisasi payment gateway, bullmq worker, dan bot notifikasi.</p>
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px;">
+          <div>
+            <h2 style="font-size: 15px; font-weight: 700;">Pemantauan arus transaksi &amp; webhook Midtrans</h2>
+            <p style="font-size: 12px; color: var(--text-muted); margin-top:2px;">Audit log sinkronisasi payment gateway, status pesanan katering, dan integrasi WhatsApp.</p>
+          </div>
+          <button class="kds-btn" style="padding:6px 14px; font-size:12px;" onclick="loadTransactions()">Muat ulang</button>
         </div>
 
-        <div class="console-box">
-          <p class="log-amber">[2026-10-02 20:00:00 WIB] [SISTEM KUNCI] CUTOFF H+1 LOCKED untuk 1.842 pesanan aktif besok.</p>
-          <p class="log-green">[2026-10-02 21:14:32 WIB] Midtrans Webhook: ND-INV-9821 settled (Rp 1.700.000) - Idempotency Verified.</p>
-          <p class="log-teal">[2026-10-02 21:30:05 WIB] WhatsApp Notification Worker: Invoice PDF dikirim ke +628123456789.</p>
-          <p class="log-amber">[2026-10-03 05:00:00 WIB] BullMQ Cron: Tiket produksi harian KDS berhasil diterbitkan (420 tiket batch 1).</p>
-          <p class="log-green">[2026-10-03 09:15:22 WIB] Health Profile Synced: Hasil kalkulasi TDEE pelanggan baru disimpan.</p>
-          <p class="log-teal">[2026-10-03 10:30:00 WIB] Driver Fleet Dispatch: 4 armada berpendingin diberangkatkan dari Sudirman.</p>
+        <!-- Summary metrics bar -->
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:12px;">
+          <div style="background:var(--surface-sunken); border:1px solid var(--border-warm); border-radius:8px; padding:12px 14px;">
+            <p style="font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; font-weight:600;">Total transaksi berhasil</p>
+            <p id="tx-stat-count" style="font-size:18px; font-weight:700; color:var(--text); margin-top:4px;">Memuat...</p>
+          </div>
+          <div style="background:var(--surface-sunken); border:1px solid var(--border-warm); border-radius:8px; padding:12px 14px;">
+            <p style="font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; font-weight:600;">Volume pembayaran bruto</p>
+            <p id="tx-stat-volume" style="font-size:18px; font-weight:700; color:var(--forest); margin-top:4px;">Memuat...</p>
+          </div>
+          <div style="background:var(--surface-sunken); border:1px solid var(--border-warm); border-radius:8px; padding:12px 14px;">
+            <p style="font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; font-weight:600;">Status idempotensi webhook</p>
+            <p id="tx-stat-idempotent" style="font-size:18px; font-weight:700; color:var(--text); margin-top:4px;">100% Terverifikasi</p>
+          </div>
+        </div>
+
+        <!-- Live interactive transaction table -->
+        <div class="table-container" style="border:none; padding:0;">
+          <div style="overflow-x:auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th>No. Faktur</th>
+                  <th>Pelanggan</th>
+                  <th>Paket katering</th>
+                  <th>Durasi</th>
+                  <th>Nominal</th>
+                  <th>Metode bayar</th>
+                  <th>Status</th>
+                  <th>Waktu transaksi</th>
+                </tr>
+              </thead>
+              <tbody id="transactions-body">
+                <tr><td colspan="8" style="text-align:center; color:var(--text-muted); padding:16px;">Memuat transaksi...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div>
+          <h3 style="font-size:13px; font-weight:700; margin-bottom:8px;">Arus audit log konsol sistem</h3>
+          <div id="transactions-console" class="console-box" style="max-height:220px; overflow-y:auto;">
+            <p class="log-amber">Memuat log audit...</p>
+          </div>
         </div>
       </div>
     </div>
@@ -1408,7 +1377,7 @@ export function renderAdminView(): string {
         <div>
           <p class="eyebrow">Katalog internal</p>
           <h2 style="font-size:22px; font-weight:700;">Kelola makanan</h2>
-          <p style="font-size:12px; color: var(--text-muted);">Simpan ke 60 rotasi resep. Data masuk ke tabel Recipe dan tampil di verifikasi QR pelanggan.</p>
+          <p style="font-size:12px; color: var(--text-muted);">Simpan ke 30 resep aktif fase validasi. Data masuk ke tabel Recipe dan tampil di verifikasi QR pelanggan.</p>
         </div>
         <div style="display:flex; flex-direction:column; align-items:flex-end; gap:8px;">
           <p id="foods-count" style="font-size:12px; color: var(--text-muted); margin:0;">Memuat katalog...</p>
@@ -1417,7 +1386,7 @@ export function renderAdminView(): string {
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="21 8 21 21 3 21 3 8"></polyline><rect x="1" y="3" width="22" height="5"></rect><line x1="10" y1="12" x2="14" y2="12"></line></svg>
               <span>Tarik 8 resep katalog ke daftar kelola</span>
             </button>
-            <button class="btn-ghost" type="button" onclick="loadFoods()">
+            <button class="btn-ghost" type="button" onclick="loadFoods(true)">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
               <span>Muat ulang katalog</span>
             </button>
@@ -1535,7 +1504,17 @@ export function renderAdminView(): string {
             </div>
             <div class="fx-search" style="position:relative;">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-              <input type="text" id="fx-search" placeholder="Cari makanan..." onkeyup="fxFoodSearch(this.value)" onfocus="fxFoodSearch(this.value)" aria-label="Cari makanan di database" autocomplete="off" />
+              <select id="fx-search-cat" class="fx-search-cat" onchange="fxOnCatSelect(this.value)" aria-label="Saring kategori makanan">
+                <option value="">Semua kategori</option>
+                <option value="WEIGHT_LOSS_LEAN_SCULPT">Weight loss</option>
+                <option value="MUSCLE_GAIN_FIT_BUILD">Muscle gain</option>
+                <option value="THERAPEUTIC_DIET">Therapeutic diet</option>
+                <option value="MAINTENANCE_VITALITY_DAILY">Maintenance</option>
+              </select>
+              <input type="text" id="fx-search" placeholder="Cari nama, SKU..." oninput="fxFoodSearch()" onfocus="fxFoodSearch()" onkeydown="if(event.key==='Escape') fxHidePop()" aria-label="Cari makanan di database" autocomplete="off" />
+              <button type="button" id="fx-search-clear" class="fx-search-clear" onclick="fxClearSearch()" aria-label="Bersihkan pencarian" style="display:none;" title="Bersihkan pencarian">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              </button>
               <div id="fx-search-pop" class="fx-search-pop" aria-live="polite" hidden></div>
             </div>
           </div>
@@ -1636,11 +1615,15 @@ export function renderAdminView(): string {
       } catch (e) { console.error('Gagal pindah tab: ' + e.message); }
       try {
         if (tabKey === 'crm' && typeof loadCrm === 'function') loadCrm();
+        if (tabKey === 'recipes' && typeof loadCatalogRecipes === 'function') loadCatalogRecipes();
+        if (tabKey === 'transactions' && typeof loadTransactions === 'function') loadTransactions();
         if (tabKey === 'accounts' && typeof loadAccounts === 'function') loadAccounts();
         if (tabKey === 'foods' && typeof loadFoods === 'function') loadFoods();
         if (tabKey === 'calendar' && typeof loadCalendar === 'function') loadCalendar();
         if (tabKey === 'transparency' && typeof loadTransparency === 'function') loadTransparency();
-        requestAnimationFrame(function() { if (typeof fxFit === 'function') fxFit(); });
+        if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
+          window.requestAnimationFrame(function() { if (typeof fxFit === 'function') fxFit(); });
+        }
       } catch (e) { console.error('Gagal memuat tab ' + tabKey + ': ' + e.message); }
     }
 
@@ -1681,7 +1664,7 @@ export function renderAdminView(): string {
             else if (e.key === 'End') { e.preventDefault(); focusTab(items, items.length - 1); }
           });
         }
-        var validTabs = ['crm', 'accounts', 'foods', 'calendar', 'transparency'];
+        var validTabs = ['crm', 'recipes', 'transactions', 'accounts', 'foods', 'calendar', 'transparency'];
         var hash = (window.location.hash || '').replace('#', '');
         if (hash && validTabs.indexOf(hash) !== -1) {
           if (hash !== 'crm') {
@@ -1690,7 +1673,7 @@ export function renderAdminView(): string {
         }
       });
       window.addEventListener('hashchange', function() {
-        var validTabs = ['crm', 'accounts', 'foods', 'calendar', 'transparency'];
+        var validTabs = ['crm', 'recipes', 'transactions', 'accounts', 'foods', 'calendar', 'transparency'];
         var hash = (window.location.hash || '').replace('#', '');
         if (hash && validTabs.indexOf(hash) !== -1) {
           switchTab(hash);
@@ -1713,34 +1696,45 @@ export function renderAdminView(): string {
       return 'tag tag-champion';
     }
 
-    async function loadCrm() {
+    async function loadCrm(forceRefresh) {
       var summaryEl = document.getElementById('crm-summary');
       var bodyEl = document.getElementById('crm-body');
-      if (!bodyEl) { console.error('Elemen crm-body tidak ditemukan.'); return; }
+      if (!bodyEl) { return; }
+      if (!forceRefresh && window.__crmRows && window.__crmRows.length) {
+        return;
+      }
       try {
-        if (summaryEl) summaryEl.textContent = 'Memuat data akun terdaftar...';
+        if (!window.__crmRows && summaryEl) summaryEl.textContent = 'Memuat data akun terdaftar...';
         const res = await fetch('/api/v1/admin/crm', { headers: { 'Accept': 'application/json' } });
         if (!res.ok) throw new Error('Server jawab ' + res.status + '. Restart backend lalu muat ulang halaman ini.');
         const json = await res.json();
         const rows = (json && json.data) || [];
+        window.__crmRows = rows;
         if (summaryEl) summaryEl.textContent = json.message || (rows.length + ' pelanggan ditemukan dari data akun terdaftar.');
         if (!rows.length) {
           bodyEl.innerHTML = '<tr><td colspan="6" style="text-align:center; color: var(--text-muted); padding: 18px;">Belum ada akun terdaftar. Buat akun baru via halaman register di web pelanggan port 3000, lalu muat ulang halaman ini.</td></tr>';
           return;
         }
         bodyEl.innerHTML = rows.map(function(r) {
+          var monetaryHtml = '<span style="font-size:11px; color: var(--text-muted);">Belum ada transaksi</span>';
+          if (r.monetary && r.monetary.totalSpent > 0) {
+            monetaryHtml = '<strong style="color:var(--text); font-size:12px;">' + escapeHtml(r.monetary.formatted) + '</strong><br>' +
+              '<span style="font-size:10px; color:var(--forest); font-weight:600;">' + escapeHtml(r.monetary.latestInvoice || 'ND-INV-202610-0982') + ' (' + escapeHtml(r.monetary.count) + 'x)</span>';
+          }
           return '<tr>' +
             '<td><strong>' + escapeHtml(r.fullName) + '</strong><br><span style="font-size:11px; color: var(--text-muted);">' + escapeHtml(r.email) + '<br>' + escapeHtml(r.phone) + '</span></td>' +
             '<td><span class="' + tagClassFor(r.segmentTone) + '">' + escapeHtml(r.segment) + '</span><br><span style="font-size:10px; color: var(--text-muted);">' + escapeHtml(r.role) + '</span></td>' +
             '<td>' + escapeHtml(r.recency) + '</td>' +
             '<td>' + escapeHtml(r.frequency) + '</td>' +
-            '<td style="font-size:11px; color: var(--text-muted);">Belum ada transaksi</td>' +
+            '<td>' + monetaryHtml + '</td>' +
             '<td style="max-width: 320px; line-height: 1.4;">' + escapeHtml(r.teleGizi) + '</td>' +
           '</tr>';
         }).join('');
       } catch (e) {
         if (summaryEl) summaryEl.textContent = 'Gagal memuat CRM: ' + e.message;
-        bodyEl.innerHTML = '<tr><td colspan="6" style="text-align:center;">Gagal memuat data. Pastikan backend port 4000 aktif.</td></tr>';
+        if (!window.__crmRows) {
+          bodyEl.innerHTML = '<tr><td colspan="6" style="text-align:center;">Gagal memuat data. Pastikan backend port 4000 aktif.</td></tr>';
+        }
       }
     }
 
@@ -1752,34 +1746,98 @@ export function renderAdminView(): string {
     }, true);
 
     if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', function() { try { loadCrm(); } catch (e) { console.error(e); } });
+      document.addEventListener('DOMContentLoaded', function() {
+        try { loadCrm(); } catch (e) { console.error(e); }
+        try { loadTransactions(); } catch (e) {}
+      });
     } else {
       try { loadCrm(); } catch (e) { console.error(e); }
+      try { loadTransactions(); } catch (e) {}
     }
 
-    async function loadAccounts() {
+    async function loadTransactions(forceRefresh) {
+      if (!forceRefresh && window.__txLoaded) return;
+      try {
+        var countEl = document.getElementById('tx-stat-count');
+        var volumeEl = document.getElementById('tx-stat-volume');
+        var bodyEl = document.getElementById('transactions-body');
+        var consoleEl = document.getElementById('transactions-console');
+
+        const res = await fetch('/api/v1/admin/transactions');
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const json = await res.json();
+        window.__txLoaded = true;
+        const data = json.data || {};
+        const rows = data.transactions || [];
+        const logs = data.auditLogs || [];
+        const summary = data.summary || {};
+
+        if (countEl) countEl.textContent = (summary.totalSettled || rows.length) + ' transaksi';
+        if (volumeEl) volumeEl.textContent = 'Rp ' + Number(summary.totalVolumeRp || 0).toLocaleString('id-ID');
+
+        if (bodyEl) {
+          if (!rows.length) {
+            bodyEl.innerHTML = '<tr><td colspan="8" style="text-align:center; color:var(--text-muted); padding:16px;">Belum ada riwayat transaksi.</td></tr>';
+          } else {
+            bodyEl.innerHTML = rows.map(function(t) {
+              var isPaid = t.transactionStatus === 'SETTLEMENT' || t.transactionStatus === 'CAPTURE';
+              var badgeClass = isPaid ? 'tag tag-loyal' : 'tag tag-risk';
+              return '<tr>' +
+                '<td style="font-family:monospace; font-weight:600;">' + escapeHtml(t.invoiceNumber) + '</td>' +
+                '<td><strong>' + escapeHtml(t.customerName) + '</strong><br><span style="font-size:11px; color:var(--text-muted);">' + escapeHtml(t.customerPhone || t.customerEmail) + '</span></td>' +
+                '<td>' + escapeHtml(t.packageType) + '</td>' +
+                '<td>' + escapeHtml(t.durationDays) + ' hari kerja</td>' +
+                '<td style="font-family:monospace; font-weight:600;">' + escapeHtml(t.formattedAmount) + '</td>' +
+                '<td style="font-size:11px;">' + escapeHtml(t.paymentType) + '</td>' +
+                '<td><span class="' + badgeClass + '">' + escapeHtml(t.transactionStatus) + '</span></td>' +
+                '<td style="font-size:11px; color:var(--text-muted);">' + escapeHtml(t.paidAt ? t.paidAt.slice(0, 16).replace('T', ' ') : '-') + '</td>' +
+              '</tr>';
+            }).join('');
+          }
+        }
+
+        if (consoleEl && logs.length) {
+          consoleEl.innerHTML = logs.map(function(l) {
+            var cls = l.tone === 'green' ? 'log-green' : l.tone === 'teal' ? 'log-teal' : 'log-amber';
+            return '<p class="' + cls + '">[' + escapeHtml(l.time) + '] ' + escapeHtml(l.text) + '</p>';
+          }).join('');
+        }
+      } catch (err) {
+        console.error('Gagal memuat transaksi: ' + err.message);
+      }
+    }
+
+    async function loadAccounts(forceRefresh) {
+      if (!forceRefresh && window.__accountsLoaded) return;
       try {
         const res = await fetch('/api/v1/admin/accounts');
         const json = await res.json();
+        window.__accountsLoaded = true;
         const rows = json.data || [];
         document.getElementById('accounts-summary').textContent = json.message || '';
-        document.getElementById('accounts-body').innerHTML = rows.map(u => '<tr>' +
-          '<td style="font-family:monospace; font-size:10px;">' + String(u.id).slice(0,8) + '…</td>' +
-          '<td>' + u.fullName + '</td>' +
-          '<td>' + u.email + '</td>' +
-          '<td>' + u.phone + '</td>' +
-          '<td>' + u.role + '</td>' +
-          '<td>' + (u.isVerified ? 'Ya' : 'Belum') + '</td>' +
-          '<td>' + (u.emailVerifiedAt ? u.emailVerifiedAt.slice(0,10) : '-') + '</td>' +
-          '<td>' + (u.lastLoginAt ? u.lastLoginAt.slice(0,16).replace('T',' ') : '-') + '</td>' +
-          '<td>' + u.failedLoginCount + '</td>' +
-          '<td>' + (u.lockedUntil ? u.lockedUntil.slice(0,10) : '-') + '</td>' +
-          '<td>' + u.tokenVersion + '</td>' +
-          '<td>' + (u.passwordChangedAt ? u.passwordChangedAt.slice(0,10) : '-') + '</td>' +
-          '<td>' + (u.deletedAt ? u.deletedAt.slice(0,10) : 'Aktif') + '</td>' +
-          '<td>' + u.createdAt.slice(0,10) + '</td>' +
-          '<td>' + u.updatedAt.slice(0,10) + '</td>' +
-        '</tr>').join('');
+        document.getElementById('accounts-body').innerHTML = rows.map(u => {
+          var nameCell = '<strong>' + escapeHtml(u.fullName) + '</strong>';
+          if (u.subscriptionSummary) {
+            nameCell += '<br><span style="font-size:10px; color:var(--forest); font-weight:600;">Paket ' + escapeHtml(u.subscriptionSummary) + '</span>';
+          }
+          return '<tr>' +
+            '<td style="font-family:monospace; font-size:10px;">' + String(u.id).slice(0,8) + '…</td>' +
+            '<td>' + nameCell + '</td>' +
+            '<td>' + escapeHtml(u.email) + '</td>' +
+            '<td>' + escapeHtml(u.phone) + '</td>' +
+            '<td>' + escapeHtml(u.role) + '</td>' +
+            '<td>' + (u.isVerified ? 'Ya' : 'Belum') + '</td>' +
+            '<td>' + (u.emailVerifiedAt ? u.emailVerifiedAt.slice(0,10) : '-') + '</td>' +
+            '<td>' + (u.lastLoginAt ? u.lastLoginAt.slice(0,16).replace('T',' ') : '-') + '</td>' +
+            '<td>' + u.failedLoginCount + '</td>' +
+            '<td>' + (u.lockedUntil ? u.lockedUntil.slice(0,10) : '-') + '</td>' +
+            '<td>' + u.tokenVersion + '</td>' +
+            '<td>' + (u.passwordChangedAt ? u.passwordChangedAt.slice(0,10) : '-') + '</td>' +
+            '<td>' + (u.deletedAt ? u.deletedAt.slice(0,10) : 'Aktif') + '</td>' +
+            '<td>' + u.createdAt.slice(0,10) + '</td>' +
+            '<td>' + u.updatedAt.slice(0,10) + '</td>' +
+          '</tr>';
+        }).join('');
       } catch (e) {
         document.getElementById('accounts-summary').textContent = 'Gagal memuat akun: ' + e.message;
       }
@@ -1795,7 +1853,68 @@ export function renderAdminView(): string {
       return map[code] || code || '-';
     }
 
-    var ACTIVE_MEAL_CAP = 20;
+    function catalogRecipeCardHtml(f) {
+      var img = f.imageUrl || '/images/meals/salmon_meal.jpg';
+      var gi = (f.details && f.details.glycemicIndex) || 40;
+      var labStatus = (f.details && f.details.lab && f.details.lab.laboratory) ? 'SIG LAB TERVERIFIKASI' : 'TERVERIFIKASI RESMI';
+      return '<div class="recipe-card" data-search="' + escapeHtml(((f.title || '') + ' ' + (f.skuCode || '') + ' ' + categoryLabel(f.category)).toLowerCase()) + '">' +
+        '<div class="recipe-img-box">' +
+          '<img src="' + escapeHtml(img) + '" alt="' + escapeHtml(f.title || 'Foto makanan') + '" loading="lazy" data-fallback="/images/meals/salmon_meal.jpg" />' +
+        '</div>' +
+        '<div class="recipe-body">' +
+          '<div class="recipe-top">' +
+            '<span class="recipe-sku">' + escapeHtml(f.skuCode || '-') + '</span>' +
+            '<span class="lab-tag">' + labStatus + '</span>' +
+          '</div>' +
+          '<div class="recipe-name">' + escapeHtml(f.title || '-') + '</div>' +
+          '<p style="font-size: 11px; color: var(--text-muted); margin-bottom: 6px;">Kategori: ' + escapeHtml(categoryLabel(f.category)) + '</p>' +
+          '<div class="macro-bar">' +
+            '<span class="macro-cal">' + (f.calories || 0) + ' kkal</span>' +
+            '<span class="macro-p">P: ' + (f.proteinGrams || 0) + 'g</span>' +
+            '<span class="macro-c">C: ' + (f.carbsGrams || 0) + 'g</span>' +
+            '<span class="macro-f">F: ' + (f.fatGrams || 0) + 'g</span>' +
+            '<span style="color: var(--forest); font-weight: 600;">GI: ' + gi + '</span>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    }
+
+    async function loadCatalogRecipes(forceRefresh) {
+      var grid = document.getElementById('recipes-grid');
+      var titleEl = document.getElementById('recipes-catalog-title');
+      if (!grid) return;
+      if (!forceRefresh && window.__foods && window.__foods.length) {
+        grid.innerHTML = window.__foods.map(catalogRecipeCardHtml).join('');
+        if (titleEl) titleEl.textContent = 'Repositori Formularium Menu Gizi (' + window.__foods.length + ' Resep)';
+        var searchEl = document.getElementById('recipe-search-input');
+        if (searchEl && searchEl.value) filterCatalogRecipes(searchEl.value);
+        return;
+      }
+      try {
+        grid.innerHTML = '<div class="skeleton" style="height:140px;"></div><div class="skeleton" style="height:140px;"></div><div class="skeleton" style="height:140px;"></div>';
+        const res = await fetch('/api/v1/recipes');
+        const json = await res.json();
+        const rows = json.data || [];
+        window.__foods = rows;
+        if (titleEl) titleEl.textContent = 'Repositori Formularium Menu Gizi (' + rows.length + ' Resep)';
+        grid.innerHTML = rows.map(catalogRecipeCardHtml).join('');
+        var searchEl2 = document.getElementById('recipe-search-input');
+        if (searchEl2 && searchEl2.value) filterCatalogRecipes(searchEl2.value);
+      } catch (e) {
+        grid.innerHTML = '<div class="empty-box" style="grid-column: 1 / -1;">Gagal memuat resep: ' + escapeHtml(e.message) + '</div>';
+      }
+    }
+
+    function filterCatalogRecipes(query) {
+      var q = String(query || '').toLowerCase().trim();
+      var cards = document.querySelectorAll('#recipes-grid .recipe-card');
+      cards.forEach(function(card) {
+        var hit = !q || (card.getAttribute('data-search') || '').indexOf(q) !== -1;
+        card.style.display = hit ? '' : 'none';
+      });
+    }
+
+    var ACTIVE_MEAL_CAP = 30;
     var ID_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
 
     function todayKeyLocal() {
@@ -1876,10 +1995,17 @@ export function renderAdminView(): string {
         '</div></article>';
     }
 
-    async function loadFoods() {
+    async function loadFoods(forceRefresh) {
       var grid = document.getElementById('foods-grid');
       var countEl = document.getElementById('foods-count');
       if (!grid) return;
+      if (!forceRefresh && window.__foods && window.__foods.length) {
+        grid.innerHTML = window.__foods.map(foodCardHtml).join('');
+        var activeFilter = document.getElementById('food-filter');
+        if (activeFilter && activeFilter.value) { filterFoodCards(activeFilter.value); }
+        updateSkuPreview();
+        return;
+      }
       try {
         grid.innerHTML = '<div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>';
         if (countEl) countEl.textContent = 'Memuat katalog...';
@@ -1960,7 +2086,7 @@ export function renderAdminView(): string {
         const json = await res.json();
         if (!res.ok) throw new Error((json && json.message) || ('Server jawab ' + res.status));
         if (msgEl) msgEl.textContent = json.message || 'Resep katalog berhasil ditarik.';
-        loadFoods();
+        loadFoods(true);
       } catch (e) {
         if (msgEl) msgEl.textContent = 'Gagal menarik katalog: ' + e.message;
         if (countEl) countEl.textContent = 'Gagal menarik katalog.';
@@ -2130,7 +2256,7 @@ export function renderAdminView(): string {
         const json = await res.json();
         if (!res.ok) throw new Error((json && json.message) || ('Server jawab ' + res.status));
         if (msgEl) msgEl.textContent = toActive ? 'Makanan aktif dan bisa dipesan pelanggan.' : 'Makanan dinonaktifkan dan disembunyikan dari pelanggan.';
-        loadFoods();
+        loadFoods(true);
       } catch (e) {
         if (msgEl) msgEl.textContent = 'Gagal ubah status: ' + e.message;
       }
@@ -2141,7 +2267,7 @@ export function renderAdminView(): string {
       const res = await fetch('/api/v1/recipes/' + id, { method: 'DELETE' });
       const json = await res.json();
       document.getElementById('food-msg').textContent = json.message || 'Makanan dihapus dari katalog.';
-      loadFoods();
+      loadFoods(true);
     }
 
     function resetFoodForm() {
@@ -2151,7 +2277,7 @@ export function renderAdminView(): string {
       setFoodCategory(FOOD_CAT_DEFAULT);
       var preview = document.getElementById('food-preview');
       if (preview) { preview.removeAttribute('src'); preview.style.display = 'none'; }
-      document.getElementById('food-msg').textContent = 'Formulir bersih. Siap tambah resep baru ke 60 rotasi resep.';
+      document.getElementById('food-msg').textContent = 'Formulir bersih. Siap tambah resep baru ke 30 resep aktif fase validasi.';
     }
 
     async function uploadFoodImage(input) {
@@ -2219,7 +2345,7 @@ export function renderAdminView(): string {
         }
         msgEl.textContent = json.message || 'Resep tersimpan di katalog.';
         resetFoodForm();
-        loadFoods();
+        loadFoods(true);
       } catch (e) {
         msgEl.textContent = 'Gagal menyimpan: ' + e.message;
       } finally {
@@ -2270,12 +2396,16 @@ export function renderAdminView(): string {
       return keys;
     }
 
-    async function loadCalendar() {
+    async function loadCalendar(forceRefresh) {
       var grid = document.getElementById('cal-grid');
       var label = document.getElementById('cal-week-label');
       var summary = document.getElementById('cal-summary');
       var msgEl = document.getElementById('cal-msg');
       if (!grid) return;
+      if (!forceRefresh && window.__foods && window.__foods.length) {
+        renderCalendar();
+        return;
+      }
       try {
         grid.innerHTML = '<div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>';
         if (summary) summary.textContent = 'Memuat kalender...';
@@ -2409,26 +2539,100 @@ export function renderAdminView(): string {
       }).join('');
     }
 
-    function fxFoodSearch(query) {
+    var FX_CATEGORIES = [
+      { code: '', label: 'Semua', color: '#6E665E' },
+      { code: 'WEIGHT_LOSS_LEAN_SCULPT', label: 'Weight loss', color: '#2C4A3E' },
+      { code: 'MUSCLE_GAIN_FIT_BUILD', label: 'Muscle gain', color: '#D96B43' },
+      { code: 'THERAPEUTIC_DIET', label: 'Therapeutic', color: '#4A7C9B' },
+      { code: 'MAINTENANCE_VITALITY_DAILY', label: 'Maintenance', color: '#B7791F' }
+    ];
+
+    function fxSetCat(code) {
+      var catSelect = document.getElementById('fx-search-cat');
+      if (catSelect) catSelect.value = code;
+      fxFoodSearch();
+      var input = document.getElementById('fx-search');
+      if (input) input.focus();
+    }
+
+    function fxOnCatSelect(code) {
+      fxFoodSearch();
+      var input = document.getElementById('fx-search');
+      if (input) input.focus();
+    }
+
+    function fxClearSearch() {
+      var input = document.getElementById('fx-search');
+      var catSelect = document.getElementById('fx-search-cat');
+      if (input) input.value = '';
+      if (catSelect) catSelect.value = '';
+      fxFoodSearch();
+      if (input) input.focus();
+    }
+
+    function fxFoodSearch(queryOverride) {
       var pop = document.getElementById('fx-search-pop');
       if (!pop) return;
-      var q = String(query || '').toLowerCase().trim();
-      if (!q) { pop.hidden = true; pop.innerHTML = ''; return; }
+      var input = document.getElementById('fx-search');
+      var catSelect = document.getElementById('fx-search-cat');
+      var clearBtn = document.getElementById('fx-search-clear');
+
+      var q = String(queryOverride != null ? queryOverride : (input ? input.value : '')).toLowerCase().trim();
+      var selectedCat = catSelect ? catSelect.value : '';
+
+      if (clearBtn) {
+        clearBtn.style.display = (q || selectedCat) ? 'inline-flex' : 'none';
+      }
+
       var rows = window.__foods || [];
       var hits = rows.filter(function(f) {
+        if (selectedCat && f.category !== selectedCat) return false;
+        if (!q) return true;
         var hay = ((f.title || '') + ' ' + (f.skuCode || '') + ' ' + categoryLabel(f.category) + ' ' + (f.category || '') + ' ' + (f.qrVerificationCode || '')).toLowerCase();
         return hay.indexOf(q) !== -1;
-      }).slice(0, 20);
+      });
+
+      var headerHtml = '<div class="fx-pop-header">' +
+        '<div class="fx-pop-cats">' +
+        FX_CATEGORIES.map(function(c) {
+          var isAct = selectedCat === c.code;
+          var dot = c.code ? '<span class="fx-pop-cat-dot" style="background:' + c.color + ';"></span>' : '';
+          return '<button type="button" class="fx-pop-cat-btn' + (isAct ? ' active' : '') + '" data-cat="' + escapeHtml(c.code) + '" onclick="fxSetCat(this.dataset.cat)">' + dot + '<span>' + escapeHtml(c.label) + '</span></button>';
+        }).join('') +
+        '</div>' +
+        '<div class="fx-pop-count">' +
+          '<span>' + hits.length + ' makanan' + (selectedCat ? ' • ' + escapeHtml(categoryLabel(selectedCat)) : '') + '</span>' +
+          '<span>Seret kartu ke hari kalender</span>' +
+        '</div>' +
+      '</div>';
+
+      var bodyHtml = '';
       if (!hits.length) {
-        pop.innerHTML = '<div class="fx-pop-empty">Tidak ada makanan cocok di database.</div>';
+        bodyHtml = '<div class="fx-pop-empty">Tidak ada makanan cocok dengan kriteria pencarian ini.</div>';
       } else {
-        pop.innerHTML = hits.map(function(f) {
-          return '<div class="fx-pop-item" draggable="true" data-id="' + f.id + '" ondragstart="fxDragStart(event)" onclick="openCalEditor(this.dataset.id)" title="Seret ke hari kalender atau klik untuk ubah">' +
-            '<span class="fx-pop-title">' + escapeHtml(f.title || '-') + '</span>' +
-            '<span class="fx-pop-meta">' + escapeHtml(f.skuCode || '-') + ' • ' + escapeHtml(categoryLabel(f.category)) + ' • ' + escapeHtml(foodWindowLabel(f)) + '</span>' +
-          '</div>';
-        }).join('');
+        var displayed = hits.slice(0, 30);
+        bodyHtml = '<div style="display:flex; flex-direction:column; gap:2px;">' +
+          displayed.map(function(f) {
+            return '<div class="fx-pop-item" draggable="true" data-id="' + f.id + '" ondragstart="fxDragStart(event)" onclick="openCalEditor(this.dataset.id)" title="Seret ke hari kalender atau klik untuk ubah">' +
+              '<div style="display:flex; align-items:flex-start; justify-content:space-between; gap:6px;">' +
+                '<span class="fx-pop-title">' + escapeHtml(f.title || '-') + '</span>' +
+                (f.calories != null ? '<span style="font-size:10px; font-weight:700; color:#1A1310; font-family:monospace; white-space:nowrap;">' + f.calories + ' kkal</span>' : '') +
+              '</div>' +
+              '<div class="fx-pop-meta" style="display:flex; align-items:center; gap:5px; margin-top:2px;">' +
+                '<span style="display:inline-block; width:7px; height:7px; border-radius:2px; background:' + fxCatColor(f.category) + '; flex-shrink:0;"></span>' +
+                '<span>' + escapeHtml(categoryLabel(f.category)) + '</span>' +
+                '<span>•</span>' +
+                '<span>' + escapeHtml(f.skuCode || '-') + '</span>' +
+                '<span>•</span>' +
+                '<span>' + escapeHtml(foodWindowLabel(f)) + '</span>' +
+              '</div>' +
+            '</div>';
+          }).join('') +
+          (hits.length > 30 ? '<div style="font-size:10px; color:var(--text-muted); text-align:center; padding:6px 0;">Menampilkan 30 dari ' + hits.length + ' makanan. Ketik nama untuk mempersempit.</div>' : '') +
+        '</div>';
       }
+
+      pop.innerHTML = headerHtml + bodyHtml;
       pop.hidden = false;
     }
 
@@ -2566,8 +2770,8 @@ export function renderAdminView(): string {
             : 'Makanan tayang pada ' + fmtDateId(dayKey) + ' dan masuk kalender pelanggan.';
         }
         fxHidePop();
-        loadCalendar();
-        if (typeof loadFoods === 'function') loadFoods();
+        loadCalendar(true);
+        if (typeof loadFoods === 'function') loadFoods(true);
       } catch (e) {
         if (msgEl) msgEl.textContent = 'Gagal menjadwalkan: ' + e.message;
       }
@@ -2613,8 +2817,8 @@ export function renderAdminView(): string {
           return;
         }
         fxHidePop();
-        loadCalendar();
-        if (typeof loadFoods === 'function') loadFoods();
+        loadCalendar(true);
+        if (typeof loadFoods === 'function') loadFoods(true);
       } catch (e) {
         if (msgEl) msgEl.textContent = 'Gagal mengeluarkan: ' + e.message;
       }
@@ -2622,8 +2826,8 @@ export function renderAdminView(): string {
 
     document.addEventListener('click', function(e) {
       var pop = document.getElementById('fx-search-pop');
-      var search = document.getElementById('fx-search');
-      if (pop && !pop.hidden && !pop.contains(e.target) && e.target !== search) fxHidePop();
+      var searchWrap = document.querySelector('.fx-search');
+      if (pop && !pop.hidden && !pop.contains(e.target) && (!searchWrap || !searchWrap.contains(e.target))) fxHidePop();
     });
 
     function fxFit() {
@@ -2682,9 +2886,8 @@ export function renderAdminView(): string {
           '</div>' +
         '</div>';
       }).join('');
-      var searchInput = document.getElementById('fx-search');
       var pop = document.getElementById('fx-search-pop');
-      if (searchInput && pop && !pop.hidden && searchInput.value) fxFoodSearch(searchInput.value);
+      if (pop && !pop.hidden) fxFoodSearch();
       fxFit();
     }
 
@@ -2807,8 +3010,8 @@ export function renderAdminView(): string {
         closeCalEditor();
         var calMsg = document.getElementById('cal-msg');
         if (calMsg) calMsg.textContent = 'Jadwal tayang tersimpan dan masuk kalender pelanggan.';
-        loadCalendar();
-        if (typeof loadFoods === 'function') loadFoods();
+        loadCalendar(true);
+        if (typeof loadFoods === 'function') loadFoods(true);
       } catch (e) {
         if (msgEl) msgEl.textContent = 'Gagal menyimpan jadwal: ' + e.message;
       }
@@ -2816,9 +3019,20 @@ export function renderAdminView(): string {
 
         var trFoodId = '';
 
-    async function loadTransparency() {
+    async function loadTransparency(forceRefresh) {
       var countEl = document.getElementById('tr-count');
       var msgEl = document.getElementById('tr-msg');
+      if (!forceRefresh && window.__foods && window.__foods.length) {
+        var rows = window.__foods;
+        if (countEl) countEl.textContent = rows.length + ' makanan di database.';
+        if (!trFoodId || !rows.some(function(r) { return r.id === trFoodId; })) {
+          trFoodId = rows.length ? rows[0].id : '';
+        }
+        renderTrFoodList(rows);
+        paintTrFood();
+        renderTrForm(trFoodId);
+        return;
+      }
       try {
         if (countEl) countEl.textContent = 'Memuat...';
         const res = await fetch('/api/v1/recipes');
@@ -3190,7 +3404,7 @@ export function renderAdminView(): string {
         const json = await res.json();
         if (!res.ok) throw new Error((json && json.message) || ('Server jawab ' + res.status));
         if (msgEl) msgEl.textContent = 'Data transparansi tersimpan di database dan tampil di halaman pelanggan.';
-        loadTransparency();
+        loadTransparency(true);
       } catch (e) {
         if (msgEl) msgEl.textContent = 'Gagal menyimpan: ' + e.message;
       }

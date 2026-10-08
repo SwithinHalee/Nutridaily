@@ -15,7 +15,7 @@ import {
   RefreshTokenRecord,
   UserRecord,
 } from './repository/auth.repository';
-import { LoginInput, RegisterInput, ResetPasswordInput, passwordContainsPersonalData } from './auth.schemas';
+import { LoginInput, RegisterInput, ResetPasswordInput, DATA_CONSENT_VERSION, passwordContainsPersonalData } from './auth.schemas';
 import { RequestContext } from './auth-cookies';
 import { HttpStatus } from '@nestjs/common';
 
@@ -35,6 +35,8 @@ export interface PublicUser {
   isVerified: boolean;
   createdAt: string;
   passwordChangedAt: string | null;
+  dataConsentAt: string | null;
+  dataConsentVersion: string | null;
 }
 
 export function toPublicUser(u: UserRecord): PublicUser {
@@ -47,6 +49,8 @@ export function toPublicUser(u: UserRecord): PublicUser {
     isVerified: u.isVerified,
     createdAt: u.createdAt.toISOString(),
     passwordChangedAt: u.passwordChangedAt ? u.passwordChangedAt.toISOString() : null,
+    dataConsentAt: u.dataConsentAt ? u.dataConsentAt.toISOString() : null,
+    dataConsentVersion: u.dataConsentVersion ?? null,
   };
 }
 
@@ -79,6 +83,16 @@ export class AuthService {
   async register(input: RegisterInput, ctx: RequestContext): Promise<{ message: string }> {
     this.enforce(`register:ip:${ctx.ip}`, RATE_LIMITS.registerPerIp);
 
+    // UU PDP No. 27/2022 Bab 11.2: registration requires explicit data processing consent.
+    // The Zod schema rejects this first, but the service stays authoritative for direct callers.
+    if (input.dataConsent !== true) {
+      throw new ApiException(
+        HttpStatus.BAD_REQUEST,
+        'CONSENT_REQUIRED',
+        'Pendaftaran memerlukan persetujuan eksplisit penggunaan data tubuh untuk kalkulasi menu menurut UU PDP No. 27/2022.',
+      );
+    }
+
     const passwordHash = await this.hasher.hash(input.password);
 
     const existing = await this.repo.findUserByEmail(input.email);
@@ -99,6 +113,8 @@ export class AuthService {
         phone: input.phone,
         passwordHash,
         fullName: input.fullName,
+        dataConsentAt: new Date(),
+        dataConsentVersion: DATA_CONSENT_VERSION,
       });
       await this.sendVerificationEmail(user);
       this.logger.log(`Registrasi baru user=${user.id} ip=${ctx.ip}`);

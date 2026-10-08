@@ -12,6 +12,7 @@ import { AccountService } from '../account/account.service';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { AUTH_REPOSITORY, AuthRepository } from './repository/auth.repository';
+import { DATA_CONSENT_VERSION } from './auth.schemas';
 import { InMemoryAuthRepository } from './repository/in-memory-auth.repository';
 import { PrismaAuthRepository } from './repository/prisma-auth.repository';
 
@@ -70,6 +71,7 @@ export class AuthModule implements OnModuleInit, OnApplicationShutdown {
     if (this.prisma) {
       await this.prisma.$connect();
       this.logger.log('Penyimpanan auth: PostgreSQL (Prisma).');
+      await this.seedDemoAccount();
     } else {
       this.logger.warn(
         'Penyimpanan auth: IN-MEMORY (DATABASE_URL tidak diset). Data akun hilang saat server restart. Khusus pengembangan.',
@@ -83,18 +85,37 @@ export class AuthModule implements OnModuleInit, OnApplicationShutdown {
     await this.prisma?.$disconnect();
   }
 
-  /** Verified demo customer so the frontend can be tried immediately. In-memory dev mode only. */
+  /** Verified demo customer and initial client account so frontend & CRM can be tried immediately in development. */
   private async seedDemoAccount(): Promise<void> {
-    if (authConfig.isProduction || this.repo.kind !== 'memory') return;
-    if (await this.repo.findUserByEmail(DEMO_ACCOUNT.email)) return;
-    await this.repo.createUser({
-      email: DEMO_ACCOUNT.email,
-      phone: DEMO_ACCOUNT.phone,
-      fullName: DEMO_ACCOUNT.fullName,
-      passwordHash: await this.hasher.hash(DEMO_ACCOUNT.password),
-      isVerified: true,
-      emailVerifiedAt: new Date(),
-    });
-    this.logger.log(`Akun demo siap: ${DEMO_ACCOUNT.email} / ${DEMO_ACCOUNT.password}`);
+    if (authConfig.isProduction) return;
+    if (!(await this.repo.findUserByEmail(DEMO_ACCOUNT.email))) {
+      await this.repo.createUser({
+        email: DEMO_ACCOUNT.email,
+        phone: DEMO_ACCOUNT.phone,
+        fullName: DEMO_ACCOUNT.fullName,
+        passwordHash: await this.hasher.hash(DEMO_ACCOUNT.password),
+        isVerified: true,
+        emailVerifiedAt: new Date(),
+        dataConsentAt: new Date(),
+        dataConsentVersion: DATA_CONSENT_VERSION,
+      });
+      this.logger.log(`Akun demo siap: ${DEMO_ACCOUNT.email} / ${DEMO_ACCOUNT.password}`);
+    }
+
+    const joshuaEmail = 'joshuaabdiel365@gmail.com';
+    if (!(await this.repo.findUserByEmail(joshuaEmail))) {
+      await this.repo.createUser({
+        id: '3d3e5a9b-6d9f-4154-b330-9a48399de585',
+        email: joshuaEmail,
+        phone: '+6281292570602',
+        fullName: 'Joshua Abdiel',
+        passwordHash: await this.hasher.hash('Katering#Sehat2026'),
+        isVerified: true,
+        emailVerifiedAt: new Date(),
+        dataConsentAt: new Date(),
+        dataConsentVersion: DATA_CONSENT_VERSION,
+      } as any);
+      this.logger.log(`Akun pelanggan siap: ${joshuaEmail}`);
+    }
   }
 }

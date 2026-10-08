@@ -77,8 +77,11 @@ async function bootstrap() {
     maxAge: 600,
   });
 
-  // Serve static assets from public folder (images, icons, etc.)
-  app.useStaticAssets(join(__dirname, '..', 'public'));
+  // Serve static assets from public folder (images, icons, etc.) dengan caching 1 hari
+  app.useStaticAssets(join(__dirname, '..', 'public'), {
+    maxAge: 86400000,
+    etag: true,
+  });
 
   // Legacy class-validator DTOs on existing modules. New auth routes validate with Zod pipes.
   app.useGlobalPipes(

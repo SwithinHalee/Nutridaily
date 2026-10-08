@@ -51,6 +51,7 @@ export class PrismaAuthRepository implements AuthRepository {
     try {
       return (await this.prisma.user.create({
         data: {
+          ...((data as any).id ? { id: (data as any).id } : {}),
           email: data.email,
           phone: data.phone,
           passwordHash: data.passwordHash,
@@ -58,6 +59,8 @@ export class PrismaAuthRepository implements AuthRepository {
           role: data.role ?? 'CUSTOMER',
           isVerified: data.isVerified ?? false,
           emailVerifiedAt: data.emailVerifiedAt ?? null,
+          dataConsentAt: data.dataConsentAt ?? null,
+          dataConsentVersion: data.dataConsentVersion ?? null,
         },
       })) as UserRecord;
     } catch (e) {

@@ -169,6 +169,8 @@ export interface AccountUser {
   isVerified: boolean;
   createdAt: string;
   passwordChangedAt: string | null;
+  dataConsentAt: string | null;
+  dataConsentVersion: string | null;
 }
 
 export interface SessionInfo {
@@ -188,7 +190,7 @@ interface MessageResponse {
 const AUTH = { skipRefresh: true };
 
 export const authApi = {
-  register: (input: { fullName: string; email: string; phone: string; password: string; confirmPassword: string }) =>
+  register: (input: { fullName: string; email: string; phone: string; password: string; confirmPassword: string; dataConsent: boolean }) =>
     api.post<MessageResponse>('/api/v1/auth/register', input, AUTH),
   verifyEmail: (token: string) => api.post<MessageResponse>('/api/v1/auth/verify-email', { token }, AUTH),
   resendVerification: (email: string) => api.post<MessageResponse>('/api/v1/auth/resend-verification', { email }, AUTH),
@@ -248,9 +250,33 @@ export const recipesApi = {
   getCatalog: (week?: 'current' | 'next') =>
     api.get<{ data: { days: any[]; meals: any[] } }>(
       week === 'next' ? '/api/v1/recipes/catalog?week=next' : '/api/v1/recipes/catalog',
+      { skipRefresh: true },
     ),
-  getCleanLabel: () => api.get<{ data: any[] }>('/api/v1/recipes/clean-label'),
-  verifyCleanLabel: (qrCode: string) => api.get<{ data: any }>(`/api/v1/recipes/verify/${qrCode}`),
+  getCleanLabel: () => api.get<{ data: any[] }>('/api/v1/recipes/clean-label', { skipRefresh: true }),
+  verifyCleanLabel: (qrCode: string) => api.get<{ data: any }>(`/api/v1/recipes/verify/${qrCode}`, { skipRefresh: true }),
+};
+
+export interface CheckoutInput {
+  orderId?: string;
+  packageType: string;
+  durationDays: number;
+  scheduleMode?: 'ROLLOVER' | 'PARALLEL';
+  targetCalories?: number;
+  totalAmount: number;
+  paymentMethod: string;
+  deliveryAddress?: {
+    label?: string;
+    fullAddress?: string;
+  };
+}
+
+export const paymentsApi = {
+  createSnap: (data: any) =>
+    api.post<{ statusCode: number; data: any }>('/api/v1/payments/create-snap', data),
+  checkout: (data: CheckoutInput) =>
+    api.post<{ statusCode: number; message: string; data: any }>('/api/v1/payments/checkout', data),
+  getTransactions: () =>
+    api.get<{ statusCode: number; data: any }>('/api/v1/payments/transactions'),
 };
 
 /** Same rules as the backend Zod schema, for live feedback only. The server stays authoritative. */

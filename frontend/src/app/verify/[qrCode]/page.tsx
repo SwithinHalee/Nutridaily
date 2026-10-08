@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   ShieldCheck,
   Award,
@@ -134,11 +135,28 @@ export default function CleanLabelVerificationPage({
           id="verify-meal-select"
           value={selectedMeal.qrCode}
           onChange={handleSelectMeal}
+          searchable
+          searchPlaceholder="Cari SKU, nama, atau kategori..."
+          size="lg"
           options={meals.map((m) => ({
             value: m.qrCode,
             label: m.recipeTitle,
             description: `${m.skuCode} • ${m.category}`,
             badge: m.labCertification.laboratory.includes('SIG') ? 'SIG Lab' : 'Sucofindo',
+            keywords: `${m.skuCode} ${m.shortTitle} ${m.category} ${m.qrCode} ${m.labCertification.laboratory}`,
+            icon: (
+              <Image
+                src={m.imageUrl}
+                alt=""
+                aria-hidden="true"
+                width={80}
+                height={80}
+                sizes="80px"
+                quality={60}
+                loading="lazy"
+                className="h-10 w-10 shrink-0 rounded-[8px] border border-warm-border/60 bg-tebu-200 object-cover"
+              />
+            ),
           }))}
           variant="surface"
         />
@@ -156,10 +174,14 @@ export default function CleanLabelVerificationPage({
 
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
           <div className="w-20 h-20 md:w-24 md:h-24 rounded-[12px] overflow-hidden border border-forest-border shrink-0 bg-forest-active">
-            <img
+            <Image
               src={selectedMeal.imageUrl}
               alt={selectedMeal.shortTitle}
-              className="w-full h-full object-cover"
+              width={256}
+              height={256}
+              sizes="96px"
+              quality={90}
+              className="h-full w-full object-cover"
             />
           </div>
 
@@ -181,21 +203,26 @@ export default function CleanLabelVerificationPage({
 
       {/* Independent Laboratory Certification Card */}
       <div className="bg-warm-surface border border-warm-border rounded-[18px] p-6 grain-overlay-light space-y-4 shadow-natural">
-        <div className="flex items-start gap-3.5 pb-4 border-b border-dashed border-warm-border">
-          <div className="p-2.5 bg-forest-subtle border border-forest-border rounded-md text-forest shrink-0">
-            <Award className="w-6 h-6" />
-          </div>
-          <div className="space-y-0.5">
-            <div className="flex items-center gap-2">
+        <div className="pb-4 border-b border-dashed border-warm-border space-y-3">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="p-2.5 bg-forest-subtle border border-forest-border rounded-md text-forest shrink-0">
+                <Award className="w-6 h-6" />
+              </div>
               <h2 className="font-display font-semibold text-base text-warm-black">
                 Hasil sertifikasi laboratorium independen
               </h2>
-              <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-forest text-tebu-50">
-                Lulus uji
-              </span>
             </div>
-            <p className="text-xs font-medium text-warm-black">{selectedMeal.labCertification.laboratory}</p>
-            <p className="text-[11px] font-mono text-warm-muted">
+            <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded bg-forest text-tebu-50 shrink-0 whitespace-nowrap self-start mt-1">
+              Lulus uji
+            </span>
+          </div>
+
+          <div className="space-y-1 pt-0.5">
+            <p className="text-xs font-semibold text-warm-black break-words">
+              {selectedMeal.labCertification.laboratory}
+            </p>
+            <p className="text-[11px] font-mono text-warm-muted break-words">
               Nomor sertifikat: {selectedMeal.labCertification.certificateNumber} (Diuji tanggal {selectedMeal.labCertification.testDate})
             </p>
           </div>
@@ -215,31 +242,31 @@ export default function CleanLabelVerificationPage({
       </div>
 
       {/* Precision Nutrition Facts */}
-      <div className="bg-warm-surface border border-warm-border rounded-[18px] p-6 grain-overlay-light space-y-4 shadow-natural">
+      <div className="bg-warm-surface border border-warm-border rounded-[18px] p-4 sm:p-6 grain-overlay-light space-y-4 shadow-natural">
         <h2 className="font-display font-semibold text-base text-warm-black">
           Kandungan gizi presisi per porsi makan
         </h2>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-center">
-          <div className="p-3 bg-tebu-50 rounded-md border border-warm-border">
+          <div className="p-2.5 sm:p-3 bg-tebu-50 rounded-md border border-warm-border">
             <span className="text-[11px] text-warm-stone block">Total energi</span>
             <p className="font-display font-bold text-lg text-warm-black">{selectedMeal.nutritionFacts.calories} kkal</p>
           </div>
-          <div className="p-3 bg-tebu-50 rounded-md border border-warm-border">
+          <div className="p-2.5 sm:p-3 bg-tebu-50 rounded-md border border-warm-border">
             <span className="text-[11px] text-warm-stone block">Protein bersih</span>
             <p className="font-display font-bold text-lg text-warm-black">{selectedMeal.nutritionFacts.proteinGrams}g</p>
           </div>
-          <div className="p-3 bg-tebu-50 rounded-md border border-warm-border">
+          <div className="p-2.5 sm:p-3 bg-tebu-50 rounded-md border border-warm-border">
             <span className="text-[11px] text-warm-stone block">Karbohidrat</span>
             <p className="font-display font-bold text-lg text-warm-black">{selectedMeal.nutritionFacts.carbsGrams}g</p>
           </div>
-          <div className="p-3 bg-tebu-50 rounded-md border border-warm-border">
+          <div className="p-2.5 sm:p-3 bg-tebu-50 rounded-md border border-warm-border">
             <span className="text-[11px] text-warm-stone block">Lemak baik</span>
             <p className="font-display font-bold text-lg text-warm-black">{selectedMeal.nutritionFacts.fatGrams}g</p>
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-2 pt-1 text-center text-xs text-warm-muted border-t border-dashed border-warm-border">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1 text-center text-xs text-warm-muted border-t border-dashed border-warm-border">
           <div className="p-2 bg-tebu-50 rounded">Serat pangan: <strong className="text-warm-black font-semibold">{selectedMeal.nutritionFacts.fiberGrams}g</strong></div>
           <div className="p-2 bg-tebu-50 rounded">Natrium: <strong className="text-warm-black font-semibold">{selectedMeal.nutritionFacts.sodiumMg}mg</strong></div>
           <div className="p-2 bg-tebu-50 rounded">Indeks glikemik: <strong className="text-warm-black font-semibold">&lt; {selectedMeal.nutritionFacts.glycemicIndex} (Rendah)</strong></div>
@@ -247,7 +274,7 @@ export default function CleanLabelVerificationPage({
       </div>
 
       {/* Component Grammage Breakdown */}
-      <div className="bg-warm-surface border border-warm-border rounded-[18px] p-6 grain-overlay-light space-y-3 shadow-natural">
+      <div className="bg-warm-surface border border-warm-border rounded-[18px] p-4 sm:p-6 grain-overlay-light space-y-3 shadow-natural">
         <div className="flex items-center gap-2">
           <Scale className="w-4 h-4 text-forest shrink-0" />
           <h2 className="font-display font-semibold text-base text-warm-black">
@@ -266,7 +293,7 @@ export default function CleanLabelVerificationPage({
       </div>
 
       {/* Farm Origin Transparency */}
-      <div className="bg-warm-surface border border-warm-border rounded-[18px] p-6 grain-overlay-light space-y-4 shadow-natural">
+      <div className="bg-warm-surface border border-warm-border rounded-[18px] p-4 sm:p-6 grain-overlay-light space-y-4 shadow-natural">
         <h2 className="font-display font-semibold text-base text-warm-black">
           Asal usul bahan dari petani mitra lokal
         </h2>
@@ -295,7 +322,7 @@ export default function CleanLabelVerificationPage({
       </div>
 
       {/* Chef Preparation Notes & Allergens */}
-      <div className="bg-warm-surface border border-warm-border rounded-[18px] p-5 space-y-3 text-xs">
+      <div className="bg-warm-surface border border-warm-border rounded-[18px] p-4 sm:p-5 space-y-3 text-xs">
         <div className="flex items-start gap-2.5">
           <ChefHat className="w-4 h-4 text-forest shrink-0 mt-0.5" />
           <div className="space-y-1">
@@ -315,14 +342,14 @@ export default function CleanLabelVerificationPage({
         <button
           type="button"
           onClick={handleCopyLink}
-          className="flex-1 py-3 px-4 rounded-md bg-warm-surface border border-warm-border hover:bg-tebu-100 text-warm-black text-xs font-semibold transition-colors text-center"
+          className="flex-1 py-3 px-4 rounded-md bg-warm-surface border border-warm-border hover:bg-tebu-100 text-warm-black text-xs font-semibold transition-colors text-center min-h-[44px] flex items-center justify-center cursor-pointer"
         >
           {isCopied ? 'Tautan verifikasi tersalin' : 'Salin tautan verifikasi ini'}
         </button>
         <button
           type="button"
           onClick={handleDownloadPdf}
-          className="flex-1 py-3 px-4 rounded-md bg-forest hover:bg-forest-hover text-tebu-50 text-xs font-semibold transition-colors flex items-center justify-center gap-2"
+          className="flex-1 py-3 px-4 rounded-md bg-forest hover:bg-forest-hover text-tebu-50 text-xs font-semibold transition-colors flex items-center justify-center gap-2 min-h-[44px] cursor-pointer"
         >
           <FileText className="w-4 h-4" />
           <span>Unduh sertifikat lab resmi (PDF)</span>

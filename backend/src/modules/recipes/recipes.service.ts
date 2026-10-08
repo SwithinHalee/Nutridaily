@@ -84,6 +84,7 @@ export interface WeeklyDay {
   dateNum: string;
   fullDate: string;
   isToday: boolean;
+  isTomorrow?: boolean;
 }
 
 @Injectable()
@@ -105,6 +106,8 @@ export class RecipesService {
     const utcTime = shifted.getTime() + shifted.getTimezoneOffset() * 60000;
     const wibTime = new Date(utcTime + 3600000 * 7);
     const todayStr = `${wibTime.getFullYear()}-${String(wibTime.getMonth() + 1).padStart(2, '0')}-${String(wibTime.getDate()).padStart(2, '0')}`;
+    const tomorrowWib = new Date(wibTime.getTime() + 86400000);
+    const tomorrowStr = `${tomorrowWib.getFullYear()}-${String(tomorrowWib.getMonth() + 1).padStart(2, '0')}-${String(tomorrowWib.getDate()).padStart(2, '0')}`;
     const todayDow = new Date(Date.UTC(wibTime.getFullYear(), wibTime.getMonth(), wibTime.getDate())).getUTCDay();
 
     const monday = new Date(Date.UTC(wibTime.getFullYear(), wibTime.getMonth(), wibTime.getDate()));
@@ -127,6 +130,7 @@ export class RecipesService {
         dateNum: `${String(date).padStart(2, '0')} ${RecipesService.MONTH_SHORT[month]}`,
         fullDate,
         isToday: fullDate === todayStr,
+        isTomorrow: fullDate === tomorrowStr,
       };
     });
   }
@@ -246,6 +250,314 @@ export class RecipesService {
       cookingMethod: 'Kukus herbal aromatik serai daun jeruk dengan takaran 1 sendok teh minyak kelapa dingin',
       farmerPartner: 'Kecombrang liar dan cabai rawit panen segar perkebunan Ciwidey',
       imageUrl: '/images/meals/chicken_matah.jpg',
+      isAvailable: true,
+    },
+    {
+      id: 'm9',
+      sku: 'ND-WL-009',
+      title: 'Kakap merah kukus jahe serai dengan tumis pokcoy dan beras cokelat',
+      category: 'Weight loss',
+      calories: 425,
+      proteinG: 43,
+      carbG: 34,
+      fatG: 11,
+      cookingMethod: 'Kukus suhu 90°C dengan kaldu jahe emprit dan serai wangi',
+      farmerPartner: 'Kakap tangkapan nelayan Muara Baru, beras cokelat Klaten',
+      imageUrl: '/images/meals/red_snapper_ginger.jpg',
+      isAvailable: true,
+    },
+    {
+      id: 'm10',
+      sku: 'ND-WL-010',
+      title: 'Tuna sirip kuning panggang lada hitam dengan quinoa dan brokoli kukus',
+      category: 'Weight loss',
+      calories: 440,
+      proteinG: 46,
+      carbG: 32,
+      fatG: 12,
+      cookingMethod: 'Pan-sear api sedang dengan lada hitam Bangka tumbuk kasar',
+      farmerPartner: 'Tuna sirip kuning perairan Bali, brokoli organik Lembang',
+      imageUrl: '/images/meals/tuna_black_pepper.jpg',
+      isAvailable: true,
+    },
+    {
+      id: 'm11',
+      sku: 'ND-WL-011',
+      title: 'Dada ayam sous-vide rempah lemon dengan ubi panggang paprika',
+      category: 'Weight loss',
+      calories: 418,
+      proteinG: 44,
+      carbG: 33,
+      fatG: 10,
+      cookingMethod: 'Sous-vide pada suhu 64°C selama 60 menit dengan herba segar',
+      farmerPartner: 'Ayam probiotik Ciamis, ubi madu Gunung Lawu',
+      imageUrl: '/images/meals/chicken_lemon_herb.jpg',
+      isAvailable: true,
+    },
+    {
+      id: 'm12',
+      sku: 'ND-MG-012',
+      title: 'Daging sapi tenderloin panggang rosemary dengan kentang tumbuk bawang putih',
+      category: 'Muscle gain',
+      calories: 685,
+      proteinG: 58,
+      carbG: 45,
+      fatG: 26,
+      cookingMethod: 'Cast iron sear dengan butter organik dan rosemary segar',
+      farmerPartner: 'Daging tenderloin peternakan Boyolali, kentang Dieng',
+      imageUrl: '/images/meals/beef_tenderloin_mash.jpg',
+      isAvailable: true,
+    },
+    {
+      id: 'm13',
+      sku: 'ND-MG-013',
+      title: 'Paha ayam fillet bakar madu wijen dengan nasi merah pilaf dan wortel baby',
+      category: 'Muscle gain',
+      calories: 660,
+      proteinG: 52,
+      carbG: 48,
+      fatG: 25,
+      cookingMethod: 'Panggang oven rotisserie dengan olesan madu hutan Sumbawa',
+      farmerPartner: 'Ayam probiotik Sukabumi, madu liar Sumbawa murni',
+      imageUrl: '/images/meals/chicken_honey_sesame.jpg',
+      isAvailable: true,
+    },
+    {
+      id: 'm14',
+      sku: 'ND-MG-014',
+      title: 'Daging sirloin bakar bumbu ketumbar dengan tumis bayam jepang dan nasi jagung',
+      category: 'Muscle gain',
+      calories: 710,
+      proteinG: 55,
+      carbG: 46,
+      fatG: 30,
+      cookingMethod: 'Charcoal grill aroma kayu apel untuk karamelisasi gurih alami',
+      farmerPartner: 'Bayam horenso hidroponik Bandung, jagung Madura',
+      imageUrl: '/images/meals/sirloin_coriander.jpg',
+      isAvailable: true,
+    },
+    {
+      id: 'm15',
+      sku: 'ND-TD-015',
+      title: 'Fillet kakap putih kukus kemangi dengan tumis labu siam dan shirataki',
+      category: 'Therapeutic DASH',
+      calories: 460,
+      proteinG: 42,
+      carbG: 35,
+      fatG: 11,
+      cookingMethod: 'Kukus bungkus daun pisang dengan aromatik kemangi liar',
+      farmerPartner: 'Kakap putih budidaya laut Lampung, labu siam Wonosobo',
+      imageUrl: '/images/meals/snapper_kemangi.jpg',
+      isAvailable: true,
+    },
+    {
+      id: 'm16',
+      sku: 'ND-TD-016',
+      title: 'Dada kalkun panggang herba mediterania dengan lentil merah dan brokoli',
+      category: 'Therapeutic DASH',
+      calories: 472,
+      proteinG: 46,
+      carbG: 36,
+      fatG: 12,
+      cookingMethod: 'Slow baked tanpa tambahan garam, kaya kalium dan magnesium',
+      farmerPartner: 'Kalkun peternakan lokal Malang, lentil organik impor',
+      imageUrl: '/images/meals/turkey_herb_lentils.jpg',
+      isAvailable: true,
+    },
+    {
+      id: 'm17',
+      sku: 'ND-TD-017',
+      title: 'Sup ikan dori bening belimbing wuluh dengan nasi porang dan jamur kuping',
+      category: 'Therapeutic DASH',
+      calories: 455,
+      proteinG: 40,
+      carbG: 38,
+      fatG: 10,
+      cookingMethod: 'Simmer kaldu bening rempah asam belimbing wuluh segar',
+      farmerPartner: 'Belimbing wuluh perkebunan Bogor, jamur kuping Cianjur',
+      imageUrl: '/images/meals/dory_fish_soup.jpg',
+      isAvailable: true,
+    },
+    {
+      id: 'm18',
+      sku: 'ND-VT-018',
+      title: 'Mangkok poke tempe edamame teriyaki dengan nasi merah dan alpukat',
+      category: 'Vitality daily',
+      calories: 448,
+      proteinG: 33,
+      carbG: 45,
+      fatG: 14,
+      cookingMethod: 'Sauté ringan saus fermentasi kedelai alami tanpa MSG',
+      farmerPartner: 'Alpukat mentega perkebunan Garut, edamame Jember',
+      imageUrl: '/images/meals/tempeh_poke_bowl.jpg',
+      isAvailable: true,
+    },
+    {
+      id: 'm19',
+      sku: 'ND-VT-019',
+      title: 'Dada ayam panggang bumbu keluwak dengan nasi basmati dan daun singkong muda',
+      category: 'Vitality daily',
+      calories: 465,
+      proteinG: 45,
+      carbG: 39,
+      fatG: 12,
+      cookingMethod: 'Panggang bumbu hitam keluwak rempah rawon kaya antioksidan',
+      farmerPartner: 'Keluwak fermentasi hutan Jawa Timur, daun singkong Sukabumi',
+      imageUrl: '/images/meals/chicken_keluwak.jpg',
+      isAvailable: true,
+    },
+    {
+      id: 'm20',
+      sku: 'ND-VT-020',
+      title: 'Tahu sutra kukus siram jamur shiitake dengan asparagus dan nasi millet',
+      category: 'Vitality daily',
+      calories: 420,
+      proteinG: 32,
+      carbG: 43,
+      fatG: 11,
+      cookingMethod: 'Kukus lembut dengan kuah reduksi shiitake aromatik jahe',
+      farmerPartner: 'Jamur shiitake pegunungan Ciwidey, millet organik Wonogiri',
+      imageUrl: '/images/meals/silken_tofu_shiitake.jpg',
+      isAvailable: true,
+    },
+    {
+      id: 'm21',
+      sku: 'ND-WL-021',
+      title: 'Grilled rosemary chicken breast dengan nasi merah dan buncis mini',
+      category: 'Weight loss',
+      calories: 450,
+      proteinG: 42,
+      carbG: 45,
+      fatG: 11,
+      cookingMethod: 'Panggang rosemary dengan minyak zaitun dan bawang putih',
+      farmerPartner: 'Ayam probiotik Sukabumi, beras merah Cianjur, buncis Kopeng',
+      imageUrl: '/images/meals/chicken_lemon_herb.jpg',
+      isAvailable: true,
+    },
+    {
+      id: 'm22',
+      sku: 'ND-WL-022',
+      title: 'Pan-seared dory with lemon herb dan kembang kol panggang',
+      category: 'Weight loss',
+      calories: 380,
+      proteinG: 35,
+      carbG: 25,
+      fatG: 14,
+      cookingMethod: 'Pan seared dengan perasan lemon dan herba segar',
+      farmerPartner: 'Fillet dori Cirebon, kembang kol Lembang, lemon Batu',
+      imageUrl: '/images/meals/dory_fish_soup.jpg',
+      isAvailable: true,
+    },
+    {
+      id: 'm23',
+      sku: 'ND-WL-023',
+      title: 'Beef bulgogi shirataki bowl dengan brokoli kukus',
+      category: 'Weight loss',
+      calories: 470,
+      proteinG: 38,
+      carbG: 35,
+      fatG: 18,
+      cookingMethod: 'Tumis bulgogi dengan minyak wijen dan bawang bombai',
+      farmerPartner: 'Sirloin Boyolali, shirataki Madiun, brokoli Kopeng',
+      imageUrl: '/images/meals/sirloin_coriander.jpg',
+      isAvailable: true,
+    },
+    {
+      id: 'm24',
+      sku: 'ND-WL-024',
+      title: 'Tofu edamame poke salad dengan alpukat',
+      category: 'Weight loss',
+      calories: 360,
+      proteinG: 24,
+      carbG: 30,
+      fatG: 16,
+      cookingMethod: 'Sajian segar dengan dressing yoghurt dan romaine renyah',
+      farmerPartner: 'Tahu organik Lembang, edamame Jember, alpukat Garut',
+      imageUrl: '/images/meals/tempeh_poke_bowl.jpg',
+      isAvailable: true,
+    },
+    {
+      id: 'm25',
+      sku: 'ND-WL-025',
+      title: 'Nasi ayam bakar bumbu madura dengan nasi cokelat organik',
+      category: 'Weight loss',
+      calories: 460,
+      proteinG: 40,
+      carbG: 48,
+      fatG: 12,
+      cookingMethod: 'Bakar bumbu madura dengan sambal kukus segar',
+      farmerPartner: 'Ayam probiotik Sukabumi, beras cokelat Klaten, cabai Ciwidey',
+      imageUrl: '/images/meals/chicken_keluwak.jpg',
+      isAvailable: true,
+    },
+    {
+      id: 'm26',
+      sku: 'ND-WL-026',
+      title: 'Herb baked salmon asparagus dengan tomat ceri',
+      category: 'Weight loss',
+      calories: 420,
+      proteinG: 34,
+      carbG: 15,
+      fatG: 24,
+      cookingMethod: 'Panggang herba suhu rendah dengan mentega zaitun',
+      farmerPartner: 'Salmon rantai dingin, asparagus Kopeng, tomat Lembang',
+      imageUrl: '/images/meals/salmon_meal.jpg',
+      isAvailable: true,
+    },
+    {
+      id: 'm27',
+      sku: 'ND-WL-027',
+      title: 'Mexican chicken burrito bowl dengan quinoa organik',
+      category: 'Weight loss',
+      calories: 480,
+      proteinG: 44,
+      carbG: 42,
+      fatG: 15,
+      cookingMethod: 'Panggang salsa dengan jagung bakar dan guacamole segar',
+      farmerPartner: 'Ayam probiotik Sukabumi, quinoa Dieng, kacang merah Grobogan',
+      imageUrl: '/images/meals/chicken_honey_sesame.jpg',
+      isAvailable: true,
+    },
+    {
+      id: 'm28',
+      sku: 'ND-WL-028',
+      title: 'Steamed snapper ginger broth dengan shiitake',
+      category: 'Weight loss',
+      calories: 350,
+      proteinG: 36,
+      carbG: 20,
+      fatG: 8,
+      cookingMethod: 'Kukus jahe suhu 90 derajat dengan kaldu bening ringan',
+      farmerPartner: 'Kakap putih Lampung, wortel Dieng, shiitake Cianjur',
+      imageUrl: '/images/meals/snapper_kemangi.jpg',
+      isAvailable: true,
+    },
+    {
+      id: 'm29',
+      sku: 'ND-WL-029',
+      title: 'Tenderloin steak with mashed sweet potato Cilembu',
+      category: 'Weight loss',
+      calories: 490,
+      proteinG: 41,
+      carbG: 40,
+      fatG: 16,
+      cookingMethod: 'Panggang wajan besi dengan ubi tumbuk lembut',
+      farmerPartner: 'Tenderloin Boyolali, ubi Cilembu Sumedang, buncis Dieng',
+      imageUrl: '/images/meals/beef_tenderloin_mash.jpg',
+      isAvailable: true,
+    },
+    {
+      id: 'm30',
+      sku: 'ND-WL-030',
+      title: 'Tempeh vegetable pad thai shirataki',
+      category: 'Weight loss',
+      calories: 370,
+      proteinG: 22,
+      carbG: 32,
+      fatG: 14,
+      cookingMethod: 'Tumis asam jawa dengan tauge segar dan tempe bakar',
+      farmerPartner: 'Tempe Grobogan, shirataki Madiun, tauge Bogor',
+      imageUrl: '/images/meals/silken_tofu_shiitake.jpg',
       isAvailable: true,
     },
   ];
@@ -799,11 +1111,1774 @@ export class RecipesService {
         'Sambal matah menggunakan minyak kelapa dingin murni (VCO) tanpa dipanaskan ulang, dipadu dengan potongan bunga kecombrang segar beraroma sitrus herbal.',
       allergenWarning: ['Bebas kacang tanah', 'Bebas susu sapi', 'Bebas gluten'],
     },
+    {
+      id: 'kakap-jahe',
+      skuCode: 'ND-WL-009',
+      qrCode: 'ND-VERIFY-WL-009-2026',
+      isActive: true,
+      batchCode: '2026-10-07-WL9',
+      ticketNumber: 'Tiket produksi dapur #0241',
+      shortTitle: 'Kakap merah kukus',
+      recipeTitle: 'Kakap merah kukus jahe serai dengan tumis pokcoy dan beras cokelat',
+      category: 'Weight loss (lean & sculpt)',
+      portionWeightGrams: 385,
+      toleranceGrams: 4,
+      imageUrl: '/images/meals/red_snapper_ginger.jpg',
+      imageCaption: 'Dokumentasi boks katering kakap merah kukus sebelum segel dikunci (Dapur Sudirman)',
+      packagingTimestamp: 'Hari ini, 06.15 WIB (Dapur Sentral Sudirman)',
+      nutritionFacts: {
+        calories: 425,
+        proteinGrams: 43,
+        carbsGrams: 34,
+        fatGrams: 11,
+        fiberGrams: 6,
+        sodiumMg: 340,
+        glycemicIndex: 40,
+      },
+      labCertification: {
+        laboratory: 'PT Saraswanti Indo Genetech (SIG Laboratory)',
+        certificateNumber: 'SIG-LAB/2026/09100-ND',
+        testDate: '25 September 2026',
+        status: 'Terverifikasi bebas residu pestisida, logam berat merkuri, dan formalin',
+        microbiology: 'Uji Salmonella sp dan E. coli dinyatakan negatif',
+        accuracyRating: 'Presisi gramatur lab 99.6%',
+      },
+      ingredientsSourcing: [
+        {
+                name: 'Kakap merah segar tangkapan lestari',
+                origin: 'Muara Baru, Teluk Jakarta (Sertifikasi Kelautan Berkelanjutan)',
+                harvestMethod: 'Pengiriman rantai dingin langsung dari pelabuhan tanpa pengawet',
+                certifications: [
+                        'HACCP Kelautan',
+                        'Bebas Formalin'
+                ]
+        },
+        {
+                name: 'Beras cokelat organik',
+                origin: 'Koperasi Tani Lestari, Klaten, Jawa Tengah',
+                harvestMethod: 'Panen tradisional dengan penggilingan sekam minimum',
+                certifications: [
+                        'SNI Organik Indonesia',
+                        'Halal Kemenag'
+                ]
+        },
+        {
+                name: 'Pokcoy hidroponik segar',
+                origin: 'Perkebunan Sayur Dataran Tinggi Lembang',
+                harvestMethod: 'Panen pagi hari bebas pestisida kimia',
+                certifications: [
+                        'Good Agricultural Practices (GAP)'
+                ]
+        },
+        {
+                name: 'Jahe emprit dan serai wangi',
+                origin: 'Petani Rempah Dataran Tinggi Boyolali',
+                harvestMethod: 'Rempah rimpang segar perasan pertama',
+                certifications: [
+                        'Non-GMO Verified'
+                ]
+        }
+],
+      grammage: [
+        {
+                label: 'Fillet kakap merah',
+                weight: '175 gram'
+        },
+        {
+                label: 'Beras cokelat',
+                weight: '115 gram'
+        },
+        {
+                label: 'Pokcoy tumis',
+                weight: '70 gram'
+        },
+        {
+                label: 'Kuah jahe serai',
+                weight: '25 ml'
+        }
+],
+      chefNotes:
+        'Fillet kakap merah dikukus perlahan dengan rempah jahe emprit dan serai wangi untuk mempertahankan kelembutan serat ikan dan cita rasa gurih alami tanpa garam berlebih.',
+      allergenWarning: ['Mengandung ikan laut (kakap merah)'],
+    },
+    {
+      id: 'tuna-ladahitam',
+      skuCode: 'ND-WL-010',
+      qrCode: 'ND-VERIFY-WL-010-2026',
+      isActive: true,
+      batchCode: '2026-10-07-WL10',
+      ticketNumber: 'Tiket produksi dapur #0242',
+      shortTitle: 'Tuna lada hitam',
+      recipeTitle: 'Tuna sirip kuning panggang lada hitam dengan quinoa dan brokoli kukus',
+      category: 'Weight loss (lean & sculpt)',
+      portionWeightGrams: 390,
+      toleranceGrams: 4.2,
+      imageUrl: '/images/meals/tuna_black_pepper.jpg',
+      imageCaption: 'Dokumentasi boks katering steak tuna lada hitam sebelum segel dikunci (Dapur Sudirman)',
+      packagingTimestamp: 'Hari ini, 06.30 WIB (Dapur Sentral Sudirman)',
+      nutritionFacts: {
+        calories: 440,
+        proteinGrams: 46,
+        carbsGrams: 32,
+        fatGrams: 12,
+        fiberGrams: 6.8,
+        sodiumMg: 355,
+        glycemicIndex: 39,
+      },
+      labCertification: {
+        laboratory: 'PT Saraswanti Indo Genetech (SIG Laboratory)',
+        certificateNumber: 'SIG-LAB/2026/09101-ND',
+        testDate: '25 September 2026',
+        status: 'Terverifikasi bebas residu pestisida, logam berat merkuri, dan formalin',
+        microbiology: 'Uji Salmonella sp dan E. coli dinyatakan negatif',
+        accuracyRating: 'Presisi gramatur lab 99.6%',
+      },
+      ingredientsSourcing: [
+        {
+                name: 'Tuna sirip kuning grade A',
+                origin: 'Perikanan Tangkap Pancing Ulur Kusamba, Klungkung, Bali',
+                harvestMethod: 'Tangkapan ramah lumba-lumba (Dolphin-Safe) rantai beku -18°C',
+                certifications: [
+                        'Friend of the Sea',
+                        'Dolphin Safe'
+                ]
+        },
+        {
+                name: 'Quinoa organik tiga warna',
+                origin: 'Kemitraan Petani Organik Dataran Tinggi Dieng',
+                harvestMethod: 'Budi daya lereng pegunungan bebas herbisida sintetis',
+                certifications: [
+                        'USDA Organic Certified',
+                        'SNI Organik'
+                ]
+        },
+        {
+                name: 'Brokoli hijau segar',
+                origin: 'Kelompok Tani Puncak Lembang, Jawa Barat',
+                harvestMethod: 'Dipetik subuh pada kesegaran pucuk optimal',
+                certifications: [
+                        'Good Agricultural Practices (GAP)'
+                ]
+        },
+        {
+                name: 'Lada hitam butir utuh',
+                origin: 'Perkebunan Lada Tradisional Muntok, Bangka',
+                harvestMethod: 'Pengeringan sinar matahari alami tanpa pemutih',
+                certifications: [
+                        'Geographical Indication Bangka'
+                ]
+        }
+],
+      grammage: [
+        {
+                label: 'Steak tuna sirip kuning',
+                weight: '180 gram'
+        },
+        {
+                label: 'Quinoa matang',
+                weight: '110 gram'
+        },
+        {
+                label: 'Brokoli kukus',
+                weight: '75 gram'
+        },
+        {
+                label: 'Saus lada hitam alami',
+                weight: '25 ml'
+        }
+],
+      chefNotes:
+        'Daging tuna sirip kuning dipanggang cepat agar bagian tengah tetap lembut dan juicy, dilapisi taburan lada hitam Bangka aromatik pembakar metabolisme.',
+      allergenWarning: ['Mengandung ikan laut (tuna sirip kuning)'],
+    },
+    {
+      id: 'ayam-lemon',
+      skuCode: 'ND-WL-011',
+      qrCode: 'ND-VERIFY-WL-011-2026',
+      isActive: true,
+      batchCode: '2026-10-07-WL11',
+      ticketNumber: 'Tiket produksi dapur #0243',
+      shortTitle: 'Ayam sous-vide lemon',
+      recipeTitle: 'Dada ayam sous-vide rempah lemon dengan ubi panggang paprika',
+      category: 'Weight loss (lean & sculpt)',
+      portionWeightGrams: 380,
+      toleranceGrams: 3.8,
+      imageUrl: '/images/meals/chicken_lemon_herb.jpg',
+      imageCaption: 'Dokumentasi boks katering ayam sous-vide lemon sebelum segel dikunci (Dapur Sudirman)',
+      packagingTimestamp: 'Hari ini, 06.45 WIB (Dapur Sentral Sudirman)',
+      nutritionFacts: {
+        calories: 418,
+        proteinGrams: 44,
+        carbsGrams: 33,
+        fatGrams: 10,
+        fiberGrams: 5.5,
+        sodiumMg: 330,
+        glycemicIndex: 42,
+      },
+      labCertification: {
+        laboratory: 'PT Saraswanti Indo Genetech (SIG Laboratory)',
+        certificateNumber: 'SIG-LAB/2026/09102-ND',
+        testDate: '25 September 2026',
+        status: 'Terverifikasi bebas residu pestisida, logam berat merkuri, dan formalin',
+        microbiology: 'Uji Salmonella sp dan E. coli dinyatakan negatif',
+        accuracyRating: 'Presisi gramatur lab 99.6%',
+      },
+      ingredientsSourcing: [
+        {
+                name: 'Dada ayam probiotik tanpa antibiotik',
+                origin: 'Peternakan Unggas Alami Panjalu, Ciamis, Jawa Barat',
+                harvestMethod: 'Pakan fermentasi herbal jamu tanpa promotor pertumbuhan sintetis',
+                certifications: [
+                        'NKV Veteriner Nomor 3207',
+                        'Halal Kemenag'
+                ]
+        },
+        {
+                name: 'Ubi madu organik',
+                origin: 'Kelompok Tani Lereng Gunung Lawu, Karanganyar',
+                harvestMethod: 'Panen tanah vulkanik subur kaya mineral alami',
+                certifications: [
+                        'SNI Organik Indonesia'
+                ]
+        },
+        {
+                name: 'Paprika merah manis',
+                origin: 'Greenhouse Hidroponik Ciwidey, Bandung',
+                harvestMethod: 'Pengairan air pegunungan Patuha',
+                certifications: [
+                        'GAP Jawa Barat'
+                ]
+        },
+        {
+                name: 'Lemon lokal tanpa lilin',
+                origin: 'Perkebunan Jeruk Dataran Tinggi Batu, Malang',
+                harvestMethod: 'Petik pohon matang alami tanpa lapisan pestisida lilin',
+                certifications: [
+                        'Prima-3 Keamanan Pangan'
+                ]
+        }
+],
+      grammage: [
+        {
+                label: 'Fillet dada ayam',
+                weight: '170 gram'
+        },
+        {
+                label: 'Ubi panggang paprika',
+                weight: '115 gram'
+        },
+        {
+                label: 'Buncis baby kukus',
+                weight: '70 gram'
+        },
+        {
+                label: 'Jus lemon zaitun',
+                weight: '25 ml'
+        }
+],
+      chefNotes:
+        'Dada ayam diolah sous-vide pada temperatur 64°C presisi tinggi menghasilkan tekstur lembut luar biasa dengan sari kaldu alami yang terkunci sempurna.',
+      allergenWarning: ['Bebas gluten','Bebas laktosa','Bebas alergen kacang'],
+    },
+    {
+      id: 'beef-tenderloin',
+      skuCode: 'ND-MG-012',
+      qrCode: 'ND-VERIFY-MG-012-2026',
+      isActive: true,
+      batchCode: '2026-10-07-MG12',
+      ticketNumber: 'Tiket produksi dapur #0244',
+      shortTitle: 'Tenderloin rosemary',
+      recipeTitle: 'Daging sapi tenderloin panggang rosemary dengan kentang tumbuk bawang putih',
+      category: 'Muscle gain (fit & build)',
+      portionWeightGrams: 420,
+      toleranceGrams: 4.5,
+      imageUrl: '/images/meals/beef_tenderloin_mash.jpg',
+      imageCaption: 'Dokumentasi boks katering tenderloin panggang rosemary sebelum segel dikunci (Dapur Sudirman)',
+      packagingTimestamp: 'Hari ini, 07.15 WIB (Dapur Sentral Sudirman)',
+      nutritionFacts: {
+        calories: 685,
+        proteinGrams: 58,
+        carbsGrams: 45,
+        fatGrams: 26,
+        fiberGrams: 5.2,
+        sodiumMg: 420,
+        glycemicIndex: 46,
+      },
+      labCertification: {
+        laboratory: 'PT Saraswanti Indo Genetech (SIG Laboratory)',
+        certificateNumber: 'SIG-LAB/2026/09103-ND',
+        testDate: '25 September 2026',
+        status: 'Terverifikasi bebas residu pestisida, logam berat merkuri, dan formalin',
+        microbiology: 'Uji Salmonella sp dan E. coli dinyatakan negatif',
+        accuracyRating: 'Presisi gramatur lab 99.6%',
+      },
+      ingredientsSourcing: [
+        {
+                name: 'Daging tenderloin sapi prime',
+                origin: 'Kemitraan Ternak Sapi Perah & Potong Selo, Boyolali',
+                harvestMethod: 'Pemotongan bersertifikat RPH Halal higienis dan dry aged 14 hari',
+                certifications: [
+                        'Sertifikasi Halal MUI',
+                        'NKV Daging Nomor 3309'
+                ]
+        },
+        {
+                name: 'Kentang granola Dieng',
+                origin: 'Koperasi Petani Dataran Tinggi Kejajar, Wonosobo',
+                harvestMethod: 'Panen tanah andosol dataran tinggi 2.000 mdpl',
+                certifications: [
+                        'Prima-2 Keamanan Pangan'
+                ]
+        },
+        {
+                name: 'Bawang putih tunggal organik',
+                origin: 'Lereng Gunung Sindoro, Temanggung',
+                harvestMethod: 'Pengeringan alami dengan angin pegunungan',
+                certifications: [
+                        'Organik Indonesia'
+                ]
+        },
+        {
+                name: 'Rosemary segar',
+                origin: 'Kebun Tanaman Herba Organik Cipanas, Puncak',
+                harvestMethod: 'Dipetik segar sebelum waktu olah dapur',
+                certifications: [
+                        'GAP Pertanian'
+                ]
+        }
+],
+      grammage: [
+        {
+                label: 'Steak tenderloin sapi',
+                weight: '190 gram'
+        },
+        {
+                label: 'Kentang tumbuk aromatik',
+                weight: '140 gram'
+        },
+        {
+                label: 'Wortel baby panggang',
+                weight: '65 gram'
+        },
+        {
+                label: 'Saus herba rosemary',
+                weight: '25 ml'
+        }
+],
+      chefNotes:
+        'Potongan tenderloin sapi pilihan dipanggang di wajan besi panas hingga medium rare karamelisasi crust renyah dengan surplus asam amino pembentuk massa otot.',
+      allergenWarning: ['Mengandung daging sapi','Susu sapi (butter organik)'],
+    },
+    {
+      id: 'ayam-madu',
+      skuCode: 'ND-MG-013',
+      qrCode: 'ND-VERIFY-MG-013-2026',
+      isActive: true,
+      batchCode: '2026-10-07-MG13',
+      ticketNumber: 'Tiket produksi dapur #0245',
+      shortTitle: 'Ayam madu wijen',
+      recipeTitle: 'Paha ayam fillet bakar madu wijen dengan nasi merah pilaf dan wortel baby',
+      category: 'Muscle gain (fit & build)',
+      portionWeightGrams: 415,
+      toleranceGrams: 4.2,
+      imageUrl: '/images/meals/chicken_honey_sesame.jpg',
+      imageCaption: 'Dokumentasi boks katering ayam bakar madu wijen sebelum segel dikunci (Dapur Sudirman)',
+      packagingTimestamp: 'Hari ini, 07.30 WIB (Dapur Sentral Sudirman)',
+      nutritionFacts: {
+        calories: 660,
+        proteinGrams: 52,
+        carbsGrams: 48,
+        fatGrams: 25,
+        fiberGrams: 6,
+        sodiumMg: 410,
+        glycemicIndex: 45,
+      },
+      labCertification: {
+        laboratory: 'PT Saraswanti Indo Genetech (SIG Laboratory)',
+        certificateNumber: 'SIG-LAB/2026/09104-ND',
+        testDate: '25 September 2026',
+        status: 'Terverifikasi bebas residu pestisida, logam berat merkuri, dan formalin',
+        microbiology: 'Uji Salmonella sp dan E. coli dinyatakan negatif',
+        accuracyRating: 'Presisi gramatur lab 99.6%',
+      },
+      ingredientsSourcing: [
+        {
+                name: 'Paha ayam probiotik fillet',
+                origin: 'Peternakan Organik Sukabumi, Jawa Barat',
+                harvestMethod: 'Ayam kampung super tanpa suntikan hormon sintetis',
+                certifications: [
+                        'NKV Nomor 3202',
+                        'Halal Kemenag'
+                ]
+        },
+        {
+                name: 'Beras merah pulen aromatik',
+                origin: 'Koperasi Tani Organik Pakem, Sleman, Yogyakarta',
+                harvestMethod: 'Pengairan irigasi mata air Gunung Merapi',
+                certifications: [
+                        'SNI Organik Indonesia'
+                ]
+        },
+        {
+                name: 'Madu hutan liar murni',
+                origin: 'Hutan Tropis Sumbawa Barat, Nusa Tenggara Barat',
+                harvestMethod: 'Panen lestari sarang lebah Apis dorsata tanpa pemanasan buatan',
+                certifications: [
+                        'Uji Kemurnian Lab SIG',
+                        'P-IRT Dinkes'
+                ]
+        },
+        {
+                name: 'Biji wijen putih',
+                origin: 'Petani Wijen Tradisional Purworejo',
+                harvestMethod: 'Penyangraian temperatur rendah menjaga kadar asam lemak tak jenuh',
+                certifications: [
+                        'Non-GMO Verified'
+                ]
+        }
+],
+      grammage: [
+        {
+                label: 'Paha ayam fillet',
+                weight: '185 gram'
+        },
+        {
+                label: 'Nasi merah pilaf',
+                weight: '135 gram'
+        },
+        {
+                label: 'Wortel baby panggang',
+                weight: '70 gram'
+        },
+        {
+                label: 'Saus madu wijen',
+                weight: '25 ml'
+        }
+],
+      chefNotes:
+        'Paha ayam bebas kulit dipanggang rotisserie suhu 190°C dengan karamelisasi madu hutan murni dan taburan biji wijen kaya zinc untuk recovery otot optimal.',
+      allergenWarning: ['Mengandung biji wijen'],
+    },
+    {
+      id: 'beef-sirloin',
+      skuCode: 'ND-MG-014',
+      qrCode: 'ND-VERIFY-MG-014-2026',
+      isActive: true,
+      batchCode: '2026-10-07-MG14',
+      ticketNumber: 'Tiket produksi dapur #0246',
+      shortTitle: 'Sirloin bakar ketumbar',
+      recipeTitle: 'Daging sirloin bakar bumbu ketumbar dengan tumis bayam jepang dan nasi jagung',
+      category: 'Muscle gain (fit & build)',
+      portionWeightGrams: 425,
+      toleranceGrams: 4.8,
+      imageUrl: '/images/meals/sirloin_coriander.jpg',
+      imageCaption: 'Dokumentasi boks katering sirloin bakar ketumbar sebelum segel dikunci (Dapur Sudirman)',
+      packagingTimestamp: 'Hari ini, 07.45 WIB (Dapur Sentral Sudirman)',
+      nutritionFacts: {
+        calories: 710,
+        proteinGrams: 55,
+        carbsGrams: 46,
+        fatGrams: 30,
+        fiberGrams: 6.5,
+        sodiumMg: 435,
+        glycemicIndex: 44,
+      },
+      labCertification: {
+        laboratory: 'PT Saraswanti Indo Genetech (SIG Laboratory)',
+        certificateNumber: 'SIG-LAB/2026/09105-ND',
+        testDate: '25 September 2026',
+        status: 'Terverifikasi bebas residu pestisida, logam berat merkuri, dan formalin',
+        microbiology: 'Uji Salmonella sp dan E. coli dinyatakan negatif',
+        accuracyRating: 'Presisi gramatur lab 99.6%',
+      },
+      ingredientsSourcing: [
+        {
+                name: 'Daging sapi sirloin marbling prima',
+                origin: 'Peternakan Mitra Sentra Ternak Singosari, Malang',
+                harvestMethod: 'Sapi potong pakan konsentrat jagung fermentasi alami',
+                certifications: [
+                        'Halal Indonesia',
+                        'NKV Daging Nomor 3507'
+                ]
+        },
+        {
+                name: 'Beras jagung pipil kuning',
+                origin: 'Kelompok Tani Pangan Tradisional Sumenep, Madura',
+                harvestMethod: 'Penggilingan bebas bahan pengawet tepung',
+                certifications: [
+                        'SNI Pangan Nusantara'
+                ]
+        },
+        {
+                name: 'Bayam horenso organik',
+                origin: 'Greenhouse Hidroponik Parongpong, Bandung Barat',
+                harvestMethod: 'Panen daun muda kaya zat besi dan asam folat',
+                certifications: [
+                        'Good Agricultural Practices (GAP)'
+                ]
+        },
+        {
+                name: 'Biji ketumbar sangrai',
+                origin: 'Perkebunan Rempah Rakyat Kulon Progo, DIY',
+                harvestMethod: 'Panen tradisional tanpa pewangi buatan',
+                certifications: [
+                        'Non-GMO Verified'
+                ]
+        }
+],
+      grammage: [
+        {
+                label: 'Sirloin steak bakar',
+                weight: '185 gram'
+        },
+        {
+                label: 'Nasi jagung pulen',
+                weight: '135 gram'
+        },
+        {
+                label: 'Bayam jepang tumis',
+                weight: '75 gram'
+        },
+        {
+                label: 'Sambal ketumbar rempah',
+                weight: '30 ml'
+        }
+],
+      chefNotes:
+        'Sirloin dipanggang bara arang kelapa dengan marinasi ketumbar sangrai dan bawang putih untuk profil rasa gurih nusantara tinggi zat besi alami.',
+      allergenWarning: ['Mengandung daging sapi','Kedelai (minyak wijen)'],
+    },
+    {
+      id: 'kakap-kemangi',
+      skuCode: 'ND-TD-015',
+      qrCode: 'ND-VERIFY-TD-015-2026',
+      isActive: true,
+      batchCode: '2026-10-07-TD15',
+      ticketNumber: 'Tiket produksi dapur #0247',
+      shortTitle: 'Kakap putih kemangi',
+      recipeTitle: 'Fillet kakap putih kukus kemangi dengan tumis labu siam dan shirataki',
+      category: 'Therapeutic diet (DASH & low GI)',
+      portionWeightGrams: 395,
+      toleranceGrams: 4,
+      imageUrl: '/images/meals/snapper_kemangi.jpg',
+      imageCaption: 'Dokumentasi boks katering kakap putih kukus kemangi sebelum segel dikunci (Dapur Sudirman)',
+      packagingTimestamp: 'Hari ini, 06.20 WIB (Dapur Sentral Sudirman)',
+      nutritionFacts: {
+        calories: 460,
+        proteinGrams: 42,
+        carbsGrams: 35,
+        fatGrams: 11,
+        fiberGrams: 7.2,
+        sodiumMg: 310,
+        glycemicIndex: 35,
+      },
+      labCertification: {
+        laboratory: 'PT Saraswanti Indo Genetech (SIG Laboratory)',
+        certificateNumber: 'SIG-LAB/2026/09106-ND',
+        testDate: '25 September 2026',
+        status: 'Terverifikasi bebas residu pestisida, logam berat merkuri, dan formalin',
+        microbiology: 'Uji Salmonella sp dan E. coli dinyatakan negatif',
+        accuracyRating: 'Presisi gramatur lab 99.6%',
+      },
+      ingredientsSourcing: [
+        {
+                name: 'Kakap putih laut ramah lingkungan',
+                origin: 'Karamba Jaring Apung Teluk Hurun, Pesawaran, Lampung',
+                harvestMethod: 'Budi daya sirkulasi air laut alami tanpa kimia sintetis',
+                certifications: [
+                        'IndoGAP Kelautan',
+                        'Bebas Logam Berat Merkuri'
+                ]
+        },
+        {
+                name: 'Beras konjac shirataki',
+                origin: 'Pabrikasi Olahan Umbi Porang Madiun, Jawa Timur',
+                harvestMethod: 'Pengeringan umbi porang alami rendah kalori dan bebas gula',
+                certifications: [
+                        'BPOM MD',
+                        'Halal Kemenag'
+                ]
+        },
+        {
+                name: 'Labu siam baby organik',
+                origin: 'Petani Dataran Tinggi Garung, Wonosobo',
+                harvestMethod: 'Dipetik muda dengan kandungan kalium tinggi pembersih sodium',
+                certifications: [
+                        'SNI Organik Indonesia'
+                ]
+        },
+        {
+                name: 'Daun kemangi liar segar',
+                origin: 'Kebun Rempah Organik Cisaat, Sukabumi',
+                harvestMethod: 'Petik pucuk segar pagi hari kaya minyak atsiri alami',
+                certifications: [
+                        'GAP Jawa Barat'
+                ]
+        }
+],
+      grammage: [
+        {
+                label: 'Fillet kakap putih',
+                weight: '175 gram'
+        },
+        {
+                label: 'Nasi shirataki porang',
+                weight: '125 gram'
+        },
+        {
+                label: 'Labu siam tumis',
+                weight: '70 gram'
+        },
+        {
+                label: 'Kuah kaldu kemangi',
+                weight: '25 ml'
+        }
+],
+      chefNotes:
+        'Dibungkus daun pisang dan dikukus perlahan bersama daun kemangi wangi untuk mereduksi beban natrium sekaligus menjaga stabilitas tekanan darah.',
+      allergenWarning: ['Mengandung ikan laut (kakap putih)'],
+    },
+    {
+      id: 'kalkun-herba',
+      skuCode: 'ND-TD-016',
+      qrCode: 'ND-VERIFY-TD-016-2026',
+      isActive: true,
+      batchCode: '2026-10-07-TD16',
+      ticketNumber: 'Tiket produksi dapur #0248',
+      shortTitle: 'Dada kalkun herba',
+      recipeTitle: 'Dada kalkun panggang herba mediterania dengan lentil merah dan brokoli',
+      category: 'Therapeutic diet (DASH & low GI)',
+      portionWeightGrams: 400,
+      toleranceGrams: 4.1,
+      imageUrl: '/images/meals/turkey_herb_lentils.jpg',
+      imageCaption: 'Dokumentasi boks katering dada kalkun herba sebelum segel dikunci (Dapur Sudirman)',
+      packagingTimestamp: 'Hari ini, 06.40 WIB (Dapur Sentral Sudirman)',
+      nutritionFacts: {
+        calories: 472,
+        proteinGrams: 46,
+        carbsGrams: 36,
+        fatGrams: 12,
+        fiberGrams: 7.5,
+        sodiumMg: 325,
+        glycemicIndex: 38,
+      },
+      labCertification: {
+        laboratory: 'PT Saraswanti Indo Genetech (SIG Laboratory)',
+        certificateNumber: 'SIG-LAB/2026/09107-ND',
+        testDate: '25 September 2026',
+        status: 'Terverifikasi bebas residu pestisida, logam berat merkuri, dan formalin',
+        microbiology: 'Uji Salmonella sp dan E. coli dinyatakan negatif',
+        accuracyRating: 'Presisi gramatur lab 99.6%',
+      },
+      ingredientsSourcing: [
+        {
+                name: 'Daging kalkun dada rendah lemak',
+                origin: 'Peternakan Unggas Sehat Dau, Kabupaten Malang',
+                harvestMethod: 'Unggas umbaran bebas kandang baterai pakan jagung alami',
+                certifications: [
+                        'NKV Unggas Nomor 3508',
+                        'Halal MUI'
+                ]
+        },
+        {
+                name: 'Lentil merah organik',
+                origin: 'Kemitraan Pertanian Pangan Sehat Internasional',
+                harvestMethod: 'Biji utuh tanpa pengawet sulfur pemutih',
+                certifications: [
+                        'Certified Organic EU/USDA',
+                        'Non-GMO'
+                ]
+        },
+        {
+                name: 'Brokoli baby organik',
+                origin: 'Kelompok Tani Tunas Harapan Kopeng, Jawa Tengah',
+                harvestMethod: 'Panen embun pagi bebas pestisida',
+                certifications: [
+                        'SNI Organik Indonesia'
+                ]
+        },
+        {
+                name: 'Herba oregano dan thyme segar',
+                origin: 'Kebun Tanaman Aromatik Cisarua, Bandung Barat',
+                harvestMethod: 'Dipetik segar per batch produksi dapur',
+                certifications: [
+                        'GAP Jawa Barat'
+                ]
+        }
+],
+      grammage: [
+        {
+                label: 'Fillet dada kalkun',
+                weight: '175 gram'
+        },
+        {
+                label: 'Lentil merah rebus',
+                weight: '120 gram'
+        },
+        {
+                label: 'Brokoli kukus',
+                weight: '80 gram'
+        },
+        {
+                label: 'Minyak zaitun herba',
+                weight: '25 ml'
+        }
+],
+      chefNotes:
+        'Daging kalkun sangat rendah lemak jenuh dan tinggi triptofan, dipadukan lentil merah kaya folat dan magnesium ramah kesehatan kardiovaskular.',
+      allergenWarning: ['Bebas gluten','Bebas laktosa','Bebas alergen kacang tanah'],
+    },
+    {
+      id: 'dori-belimbing',
+      skuCode: 'ND-TD-017',
+      qrCode: 'ND-VERIFY-TD-017-2026',
+      isActive: true,
+      batchCode: '2026-10-07-TD17',
+      ticketNumber: 'Tiket produksi dapur #0249',
+      shortTitle: 'Sup dori belimbing',
+      recipeTitle: 'Sup ikan dori bening belimbing wuluh dengan nasi porang dan jamur kuping',
+      category: 'Therapeutic diet (DASH & low GI)',
+      portionWeightGrams: 390,
+      toleranceGrams: 3.9,
+      imageUrl: '/images/meals/dory_fish_soup.jpg',
+      imageCaption: 'Dokumentasi boks katering sup dori belimbing wuluh sebelum segel dikunci (Dapur Sudirman)',
+      packagingTimestamp: 'Hari ini, 07.00 WIB (Dapur Sentral Sudirman)',
+      nutritionFacts: {
+        calories: 455,
+        proteinGrams: 40,
+        carbsGrams: 38,
+        fatGrams: 10,
+        fiberGrams: 7,
+        sodiumMg: 295,
+        glycemicIndex: 36,
+      },
+      labCertification: {
+        laboratory: 'PT Saraswanti Indo Genetech (SIG Laboratory)',
+        certificateNumber: 'SIG-LAB/2026/09108-ND',
+        testDate: '25 September 2026',
+        status: 'Terverifikasi bebas residu pestisida, logam berat merkuri, dan formalin',
+        microbiology: 'Uji Salmonella sp dan E. coli dinyatakan negatif',
+        accuracyRating: 'Presisi gramatur lab 99.6%',
+      },
+      ingredientsSourcing: [
+        {
+                name: 'Ikan dori fillet laut segar',
+                origin: 'Perikanan Tangkap Nelayan Pantai Utara Cirebon, Jawa Barat',
+                harvestMethod: 'Pendinginan es murni bebas formalin dan bahan pengawet',
+                certifications: [
+                        'Uji Lab Bebas Formalin',
+                        'HACCP Laut'
+                ]
+        },
+        {
+                name: 'Beras porang pangan fungsional',
+                origin: 'Sentra Tani Porang Rejoso, Nganjuk, Jawa Timur',
+                harvestMethod: 'Proses kristalisasi glukomanan murni tinggi serat larut air',
+                certifications: [
+                        'BPOM RI',
+                        'Halal Kemenag'
+                ]
+        },
+        {
+                name: 'Jamur kuping hitam segar',
+                origin: 'Budi Daya Jamur Kayu Pacet, Cianjur',
+                harvestMethod: 'Panen media serbuk kayu alami tanpa pestisida',
+                certifications: [
+                        'Prima-2 Pertanian'
+                ]
+        },
+        {
+                name: 'Belimbing wuluh asam segar',
+                origin: 'Perkebunan Buah Rakyat Dramaga, Bogor',
+                harvestMethod: 'Dipetik matang segar dari pohon hari yang sama',
+                certifications: [
+                        'GAP Buah Tropis'
+                ]
+        }
+],
+      grammage: [
+        {
+                label: 'Fillet ikan dori',
+                weight: '170 gram'
+        },
+        {
+                label: 'Nasi porang rendah kalori',
+                weight: '120 gram'
+        },
+        {
+                label: 'Jamur kuping kuah',
+                weight: '75 gram'
+        },
+        {
+                label: 'Kuah asam belimbing wuluh',
+                weight: '25 ml'
+        }
+],
+      chefNotes:
+        'Kuah kaldu disajikan tanpa garam dapur olahan, menggunakan keasaman alami belimbing wuluh dan rempah serai untuk stimulasi indera pengecap penderita hipertensi.',
+      allergenWarning: ['Mengandung ikan laut (dori fillet)'],
+    },
+    {
+      id: 'tempe-teriyaki',
+      skuCode: 'ND-VT-018',
+      qrCode: 'ND-VERIFY-VT-018-2026',
+      isActive: true,
+      batchCode: '2026-10-07-VT18',
+      ticketNumber: 'Tiket produksi dapur #0250',
+      shortTitle: 'Poke tempe edamame',
+      recipeTitle: 'Mangkok poke tempe edamame teriyaki dengan nasi merah dan alpukat',
+      category: 'Maintenance (vitality daily)',
+      portionWeightGrams: 395,
+      toleranceGrams: 4,
+      imageUrl: '/images/meals/tempeh_poke_bowl.jpg',
+      imageCaption: 'Dokumentasi boks katering poke tempe edamame sebelum segel dikunci (Dapur Sudirman)',
+      packagingTimestamp: 'Hari ini, 06.35 WIB (Dapur Sentral Sudirman)',
+      nutritionFacts: {
+        calories: 448,
+        proteinGrams: 33,
+        carbsGrams: 45,
+        fatGrams: 14,
+        fiberGrams: 8.5,
+        sodiumMg: 360,
+        glycemicIndex: 42,
+      },
+      labCertification: {
+        laboratory: 'PT Saraswanti Indo Genetech (SIG Laboratory)',
+        certificateNumber: 'SIG-LAB/2026/09109-ND',
+        testDate: '25 September 2026',
+        status: 'Terverifikasi bebas residu pestisida, logam berat merkuri, dan formalin',
+        microbiology: 'Uji Salmonella sp dan E. coli dinyatakan negatif',
+        accuracyRating: 'Presisi gramatur lab 99.6%',
+      },
+      ingredientsSourcing: [
+        {
+                name: 'Kedelai hitam dan kuning non-GMO',
+                origin: 'Koperasi Tani Kedelai Lokal Grobogan, Jawa Tengah',
+                harvestMethod: 'Fermentasi ragi tradisional daun pisang higienis',
+                certifications: [
+                        'SNI Tempe Indonesia',
+                        'Halal Kemenag'
+                ]
+        },
+        {
+                name: 'Alpukat mentega super',
+                origin: 'Perkebunan Buah Lereng Gunung Cikuray, Garut',
+                harvestMethod: 'Petik pohon tua kaya asam lemak tak jenuh oleat',
+                certifications: [
+                        'Prima-3 Keamanan Buah'
+                ]
+        },
+        {
+                name: 'Edamame jepang kualitas prima',
+                origin: 'Petani Mitra Budi Daya Edamame Jember, Jawa Timur',
+                harvestMethod: 'Dipetik segar subuh hari dan blansir higienis',
+                certifications: [
+                        'Global GAP Certified',
+                        'Non-GMO'
+                ]
+        },
+        {
+                name: 'Beras merah aromatik',
+                origin: 'Koperasi Beras Organik Wonogiri, Jawa Tengah',
+                harvestMethod: 'Panen tradisional pengairan pegunungan Lawu',
+                certifications: [
+                        'SNI Organik Indonesia'
+                ]
+        }
+],
+      grammage: [
+        {
+                label: 'Tempe kedelai panggang',
+                weight: '130 gram'
+        },
+        {
+                label: 'Nasi merah organik',
+                weight: '110 gram'
+        },
+        {
+                label: 'Alpukat iris mentega',
+                weight: '60 gram'
+        },
+        {
+                label: 'Edamame rebus',
+                weight: '65 gram'
+        },
+        {
+                label: 'Saus teriyaki alami',
+                weight: '30 ml'
+        }
+],
+      chefNotes:
+        'Kombinasi protein nabati tempe fermentasi tradisional dan edamame segar dengan lemak tak jenuh tunggal alpukat untuk vitalitas stamina harian yang seimbang.',
+      allergenWarning: ['Mengandung kedelai (tempe, edamame)'],
+    },
+    {
+      id: 'ayam-keluwak',
+      skuCode: 'ND-VT-019',
+      qrCode: 'ND-VERIFY-VT-019-2026',
+      isActive: true,
+      batchCode: '2026-10-07-VT19',
+      ticketNumber: 'Tiket produksi dapur #0251',
+      shortTitle: 'Ayam panggang keluwak',
+      recipeTitle: 'Dada ayam panggang bumbu keluwak dengan nasi basmati dan daun singkong muda',
+      category: 'Maintenance (vitality daily)',
+      portionWeightGrams: 405,
+      toleranceGrams: 4.2,
+      imageUrl: '/images/meals/chicken_keluwak.jpg',
+      imageCaption: 'Dokumentasi boks katering ayam panggang keluwak sebelum segel dikunci (Dapur Sudirman)',
+      packagingTimestamp: 'Hari ini, 07.10 WIB (Dapur Sentral Sudirman)',
+      nutritionFacts: {
+        calories: 465,
+        proteinGrams: 45,
+        carbsGrams: 39,
+        fatGrams: 12,
+        fiberGrams: 6.2,
+        sodiumMg: 375,
+        glycemicIndex: 45,
+      },
+      labCertification: {
+        laboratory: 'PT Saraswanti Indo Genetech (SIG Laboratory)',
+        certificateNumber: 'SIG-LAB/2026/09110-ND',
+        testDate: '25 September 2026',
+        status: 'Terverifikasi bebas residu pestisida, logam berat merkuri, dan formalin',
+        microbiology: 'Uji Salmonella sp dan E. coli dinyatakan negatif',
+        accuracyRating: 'Presisi gramatur lab 99.6%',
+      },
+      ingredientsSourcing: [
+        {
+                name: 'Dada ayam probiotik fillet',
+                origin: 'Peternakan Ayam Tanpa Hormon Sukabumi, Jawa Barat',
+                harvestMethod: 'Ayam sehat higienis sistem ventilasi kandang tertutup modern',
+                certifications: [
+                        'NKV Nomor 3202',
+                        'Halal Indonesia'
+                ]
+        },
+        {
+                name: 'Biji keluwak hutan matang pohon',
+                origin: 'Kawasan Hutan Tradisional Kendeng, Ngawi, Jawa Timur',
+                harvestMethod: 'Fermentasi abu alami 40 hari penetral glikosida',
+                certifications: [
+                        'Rempah Nusantara Autentik'
+                ]
+        },
+        {
+                name: 'Beras basmati premium',
+                origin: 'Pertanian Mitra Rendah Amilosa dan Rendah Gula',
+                harvestMethod: 'Padi bulir panjang aged 1 tahun untuk indeks glikemik rendah',
+                certifications: [
+                        'Non-GMO Verified'
+                ]
+        },
+        {
+                name: 'Daun singkong muda organik',
+                origin: 'Perkebunan Sayur Daun Hijau Bogor, Jawa Barat',
+                harvestMethod: 'Pemetikan hanya pada 3 lembar daun teratas pucuk',
+                certifications: [
+                        'GAP Jawa Barat'
+                ]
+        }
+],
+      grammage: [
+        {
+                label: 'Dada ayam fillet',
+                weight: '175 gram'
+        },
+        {
+                label: 'Nasi basmati rempah',
+                weight: '125 gram'
+        },
+        {
+                label: 'Daun singkong muda',
+                weight: '75 gram'
+        },
+        {
+                label: 'Bumbu keluwak sangrai',
+                weight: '30 ml'
+        }
+],
+      chefNotes:
+        'Bumbu hitam keluwak kaya senyawa polifenol antioksidan dipadukan ayam panggang gurih dan daun singkong muda rebus untuk menunjang daya tahan tubuh sepanjang hari kerja.',
+      allergenWarning: ['Bebas kacang tanah','Bebas susu sapi','Bebas gluten'],
+    },
+    {
+      id: 'tahu-shiitake',
+      skuCode: 'ND-VT-020',
+      qrCode: 'ND-VERIFY-VT-020-2026',
+      isActive: true,
+      batchCode: '2026-10-07-VT20',
+      ticketNumber: 'Tiket produksi dapur #0252',
+      shortTitle: 'Tahu sutra shiitake',
+      recipeTitle: 'Tahu sutra kukus siram jamur shiitake dengan asparagus dan nasi millet',
+      category: 'Maintenance (vitality daily)',
+      portionWeightGrams: 385,
+      toleranceGrams: 3.8,
+      imageUrl: '/images/meals/silken_tofu_shiitake.jpg',
+      imageCaption: 'Dokumentasi boks katering tahu sutra jamur shiitake sebelum segel dikunci (Dapur Sudirman)',
+      packagingTimestamp: 'Hari ini, 07.25 WIB (Dapur Sentral Sudirman)',
+      nutritionFacts: {
+        calories: 420,
+        proteinGrams: 32,
+        carbsGrams: 43,
+        fatGrams: 11,
+        fiberGrams: 7.8,
+        sodiumMg: 345,
+        glycemicIndex: 41,
+      },
+      labCertification: {
+        laboratory: 'PT Saraswanti Indo Genetech (SIG Laboratory)',
+        certificateNumber: 'SIG-LAB/2026/09111-ND',
+        testDate: '25 September 2026',
+        status: 'Terverifikasi bebas residu pestisida, logam berat merkuri, dan formalin',
+        microbiology: 'Uji Salmonella sp dan E. coli dinyatakan negatif',
+        accuracyRating: 'Presisi gramatur lab 99.6%',
+      },
+      ingredientsSourcing: [
+        {
+                name: 'Tahu sutra kedelai non-GMO',
+                origin: 'Pengrajin Tahu Organik Bersertifikasi Sleman, Yogyakarta',
+                harvestMethod: 'Pembuatan segar harian dengan koagulan nigari alami sari air laut',
+                certifications: [
+                        'Halal Kemenag',
+                        'SNI Pangan Organik'
+                ]
+        },
+        {
+                name: 'Jamur shiitake segar',
+                origin: 'Peternakan Jamur Dataran Tinggi Ciwidey, Bandung Selatan',
+                harvestMethod: 'Budi daya batang kayu alami suhu sejuk 18°C',
+                certifications: [
+                        'GAP Pertanian Ramah Lingkungan'
+                ]
+        },
+        {
+                name: 'Biji millet emas organik',
+                origin: 'Koperasi Pangan Serealia Nusantara Wonogiri',
+                harvestMethod: 'Serealia kuno bebas gluten kaya silika dan zat besi',
+                certifications: [
+                        'SNI Organik Indonesia'
+                ]
+        },
+        {
+                name: 'Asparagus hijau segar',
+                origin: 'Perkebunan Sayur Kopeng, Jawa Tengah',
+                harvestMethod: 'Petik subuh kualitas ekspor',
+                certifications: [
+                        'Good Agricultural Practices (GAP)'
+                ]
+        }
+],
+      grammage: [
+        {
+                label: 'Tahu sutra organik',
+                weight: '160 gram'
+        },
+        {
+                label: 'Nasi millet campur',
+                weight: '115 gram'
+        },
+        {
+                label: 'Jamur shiitake tumis',
+                weight: '60 gram'
+        },
+        {
+                label: 'Asparagus hijau',
+                weight: '30 gram'
+        },
+        {
+                label: 'Kuah reduksi shiitake',
+                weight: '20 ml'
+        }
+],
+      chefNotes:
+        'Tahu sutra bertekstur lembut disiram kuah gurih jamur shiitake sarat beta-glukan untuk kesehatan imunitas seluler tubuh yang prima.',
+      allergenWarning: ['Mengandung kedelai (tahu sutra)'],
+    },
+    {
+      id: 'ayam-rosemary-wl21',
+      skuCode: 'ND-WL-021',
+      qrCode: 'ND-VERIFY-WL-021-2026',
+      isActive: true,
+      batchCode: '2026-10-08-L21',
+      ticketNumber: 'Tiket produksi dapur #0248',
+      shortTitle: 'Ayam rosemary bakar',
+      recipeTitle: 'Grilled rosemary chicken breast dengan nasi merah dan buncis mini',
+      category: 'Weight loss (lean & sculpt)',
+      portionWeightGrams: 400,
+      toleranceGrams: 4,
+      imageUrl: '/images/meals/chicken_lemon_herb.jpg',
+      imageCaption: 'Dokumentasi boks katering ayam rosemary bakar sebelum segel dikunci (Dapur Sudirman)',
+      packagingTimestamp: 'Hari ini, 06.15 WIB (Dapur Sentral Sudirman)',
+      nutritionFacts: {
+        calories: 450,
+        proteinGrams: 42,
+        carbsGrams: 45,
+        fatGrams: 11,
+        fiberGrams: 6.5,
+        sodiumMg: 320,
+        glycemicIndex: 42,
+      },
+      labCertification: {
+        laboratory: 'PT Saraswanti Indo Genetech (SIG Laboratory)',
+        certificateNumber: 'SIG-LAB/2026/09112-ND',
+        testDate: '4 Oktober 2026',
+        status: 'Terverifikasi bebas residu pestisida, logam berat merkuri, dan formalin',
+        microbiology: 'Uji Salmonella sp dan E. coli dinyatakan negatif',
+        accuracyRating: 'Presisi gramatur lab 99.6%',
+      },
+      ingredientsSourcing: [
+        {
+          name: 'Dada ayam bakar rosemary',
+          origin: 'Peternakan Ayam Probiotik Sukabumi, Jawa Barat',
+          harvestMethod: 'Panen 07 Oktober 2026 tanpa antibiotik dan tanpa hormon sintetis',
+          certifications: ['NKV Veteriner', 'Halal Kemenag'],
+        },
+        {
+          name: 'Beras merah Cianjur organik',
+          origin: 'Koperasi Tani Cianjur Selatan, Jawa Barat',
+          harvestMethod: 'Panen tradisional dengan pengeringan sinar matahari',
+          certifications: ['SNI Organik Indonesia'],
+        },
+        {
+          name: 'Buncis mini bawang putih',
+          origin: 'Kelompok Tani Kopeng, Jawa Tengah',
+          harvestMethod: 'Dipetik subuh 07 Oktober 2026 tekstur renyah alami',
+          certifications: ['Good Agricultural Practices (GAP)'],
+        },
+        {
+          name: 'Saus jamur tiram segar',
+          origin: 'Budi daya jamur Cianjur, Jawa Barat',
+          harvestMethod: 'Reduksi kaldu jamur tanpa MSG dan tanpa pengawet',
+          certifications: ['Pangan Segar Aman'],
+        },
+      ],
+      grammage: [
+        { label: 'Dada ayam bakar', weight: '180 gram' },
+        { label: 'Nasi merah Cianjur', weight: '120 gram' },
+        { label: 'Buncis mini bawang putih', weight: '70 gram' },
+        { label: 'Saus jamur', weight: '30 ml' },
+      ],
+      chefNotes:
+        'Dada ayam dimarinasi rosemary segar lalu dipanggang perlahan agar sari tetap terkunci. Nasi merah Cianjur pulen menjadi pasangan karbo kompleks yang mengenyangkan.',
+      allergenWarning: ['Bebas gluten', 'Bebas susu sapi'],
+    },
+    {
+      id: 'dori-lemon-wl22',
+      skuCode: 'ND-WL-022',
+      qrCode: 'ND-VERIFY-WL-022-2026',
+      isActive: true,
+      batchCode: '2026-10-08-L22',
+      ticketNumber: 'Tiket produksi dapur #0249',
+      shortTitle: 'Dori lemon herba',
+      recipeTitle: 'Pan-seared dory with lemon herb dan kembang kol panggang',
+      category: 'Weight loss (lean & sculpt)',
+      portionWeightGrams: 385,
+      toleranceGrams: 4,
+      imageUrl: '/images/meals/dory_fish_soup.jpg',
+      imageCaption: 'Dokumentasi boks katering dori lemon herba sebelum segel dikunci (Dapur Sudirman)',
+      packagingTimestamp: 'Hari ini, 06.30 WIB (Dapur Sentral Sudirman)',
+      nutritionFacts: {
+        calories: 380,
+        proteinGrams: 35,
+        carbsGrams: 25,
+        fatGrams: 14,
+        fiberGrams: 5.8,
+        sodiumMg: 300,
+        glycemicIndex: 38,
+      },
+      labCertification: {
+        laboratory: 'PT Saraswanti Indo Genetech (SIG Laboratory)',
+        certificateNumber: 'SIG-LAB/2026/09113-ND',
+        testDate: '4 Oktober 2026',
+        status: 'Terverifikasi bebas residu pestisida, logam berat merkuri, dan formalin',
+        microbiology: 'Uji Salmonella sp dan E. coli dinyatakan negatif',
+        accuracyRating: 'Presisi gramatur lab 99.6%',
+      },
+      ingredientsSourcing: [
+        {
+          name: 'Fillet ikan dori segar',
+          origin: 'Perikanan Tangkap Pantai Utara Cirebon, Jawa Barat',
+          harvestMethod: 'Pendinginan es murni bebas formalin dan bebas pengawet',
+          certifications: ['HACCP Laut', 'Bebas Formalin'],
+        },
+        {
+          name: 'Kembang kol panggang organik',
+          origin: 'Petani Organik Lembang, Jawa Barat',
+          harvestMethod: 'Panen 07 Oktober 2026 alternatif karbo rendah GI',
+          certifications: ['Bebas Pestisida Kimia'],
+        },
+        {
+          name: 'Salad pelangi segar',
+          origin: 'Greenhouse Hidroponik Bandung, Jawa Barat',
+          harvestMethod: 'Dipanen pagi hari dengan air baku mata air pegunungan',
+          certifications: ['Good Agricultural Practices (GAP)'],
+        },
+        {
+          name: 'Lemon lokal tanpa lilin',
+          origin: 'Perkebunan Jeruk Batu, Malang, Jawa Timur',
+          harvestMethod: 'Petik pohon matang alami tanpa lapisan lilin',
+          certifications: ['Prima-3 Keamanan Pangan'],
+        },
+      ],
+      grammage: [
+        { label: 'Fillet ikan dori', weight: '175 gram' },
+        { label: 'Kembang kol panggang', weight: '110 gram' },
+        { label: 'Salad pelangi', weight: '70 gram' },
+        { label: 'Saus lemon herba', weight: '30 ml' },
+      ],
+      chefNotes:
+        'Fillet dori dimasak pan seared cepat agar bagian luar gurih dan bagian dalam tetap lembut. Perasan lemon segar menjaga aroma ringan yang cocok untuk defisit kalori.',
+      allergenWarning: ['Mengandung ikan laut (dori)'],
+    },
+    {
+      id: 'bulgogi-shirataki-wl23',
+      skuCode: 'ND-WL-023',
+      qrCode: 'ND-VERIFY-WL-023-2026',
+      isActive: true,
+      batchCode: '2026-10-08-L23',
+      ticketNumber: 'Tiket produksi dapur #0250',
+      shortTitle: 'Bulgogi shirataki bowl',
+      recipeTitle: 'Beef bulgogi shirataki bowl dengan brokoli kukus',
+      category: 'Weight loss (lean & sculpt)',
+      portionWeightGrams: 410,
+      toleranceGrams: 4,
+      imageUrl: '/images/meals/sirloin_coriander.jpg',
+      imageCaption: 'Dokumentasi boks katering bulgogi shirataki bowl sebelum segel dikunci (Dapur Sudirman)',
+      packagingTimestamp: 'Hari ini, 06.45 WIB (Dapur Sentral Sudirman)',
+      nutritionFacts: {
+        calories: 470,
+        proteinGrams: 38,
+        carbsGrams: 35,
+        fatGrams: 18,
+        fiberGrams: 6.2,
+        sodiumMg: 380,
+        glycemicIndex: 44,
+      },
+      labCertification: {
+        laboratory: 'PT Saraswanti Indo Genetech (SIG Laboratory)',
+        certificateNumber: 'SIG-LAB/2026/09114-ND',
+        testDate: '4 Oktober 2026',
+        status: 'Terverifikasi bebas residu pestisida, logam berat merkuri, dan formalin',
+        microbiology: 'Uji Salmonella sp dan E. coli dinyatakan negatif',
+        accuracyRating: 'Presisi gramatur lab 99.6%',
+      },
+      ingredientsSourcing: [
+        {
+          name: 'Sirloin rendah lemak iris tipis',
+          origin: 'Peternakan Mitra Singosari, Malang, Jawa Timur',
+          harvestMethod: 'Pemotongan RPH halal higienis dengan lemak dipangkas bersih',
+          certifications: ['Halal Indonesia', 'NKV Daging'],
+        },
+        {
+          name: 'Mi shirataki porang',
+          origin: 'Sentra Olahan Porang Madiun, Jawa Timur',
+          harvestMethod: 'Olahan umbi porang rendah kalori dan bebas gula',
+          certifications: ['BPOM RI', 'Halal Kemenag'],
+        },
+        {
+          name: 'Brokoli kukus segar',
+          origin: 'Kelompok Tani Lembang, Jawa Barat',
+          harvestMethod: 'Dipetik subuh pada kesegaran pucuk optimal',
+          certifications: ['Good Agricultural Practices (GAP)'],
+        },
+        {
+          name: 'Wijen sangrai',
+          origin: 'Petani Wijen Purworejo, Jawa Tengah',
+          harvestMethod: 'Sangrai suhu rendah menjaga aroma gurih alami',
+          certifications: ['Non-GMO Verified'],
+        },
+      ],
+      grammage: [
+        { label: 'Sirloin bulgogi', weight: '150 gram' },
+        { label: 'Mi shirataki', weight: '120 gram' },
+        { label: 'Brokoli kukus', weight: '75 gram' },
+        { label: 'Tabur wijen sangrai', weight: '10 gram' },
+      ],
+      chefNotes:
+        'Irisan sirloin dimarinasi bumbu bulgogi rendah gula lalu ditumis cepat agar tetap juicy. Mi shirataki memberi volume kenyang dengan kalori rendah.',
+      allergenWarning: ['Mengandung daging sapi', 'Mengandung biji wijen'],
+    },
+    {
+      id: 'tofu-poke-wl24',
+      skuCode: 'ND-WL-024',
+      qrCode: 'ND-VERIFY-WL-024-2026',
+      isActive: true,
+      batchCode: '2026-10-08-L24',
+      ticketNumber: 'Tiket produksi dapur #0251',
+      shortTitle: 'Tofu poke alpukat',
+      recipeTitle: 'Tofu edamame poke salad dengan alpukat',
+      category: 'Weight loss (lean & sculpt)',
+      portionWeightGrams: 380,
+      toleranceGrams: 4,
+      imageUrl: '/images/meals/tempeh_poke_bowl.jpg',
+      imageCaption: 'Dokumentasi boks katering tofu poke alpukat sebelum segel dikunci (Dapur Sudirman)',
+      packagingTimestamp: 'Hari ini, 07.00 WIB (Dapur Sentral Sudirman)',
+      nutritionFacts: {
+        calories: 360,
+        proteinGrams: 24,
+        carbsGrams: 30,
+        fatGrams: 16,
+        fiberGrams: 8.5,
+        sodiumMg: 260,
+        glycemicIndex: 34,
+      },
+      labCertification: {
+        laboratory: 'PT Saraswanti Indo Genetech (SIG Laboratory)',
+        certificateNumber: 'SIG-LAB/2026/09115-ND',
+        testDate: '4 Oktober 2026',
+        status: 'Terverifikasi bebas residu pestisida, logam berat merkuri, dan formalin',
+        microbiology: 'Uji Salmonella sp dan E. coli dinyatakan negatif',
+        accuracyRating: 'Presisi gramatur lab 99.6%',
+      },
+      ingredientsSourcing: [
+        {
+          name: 'Tahu organik padat',
+          origin: 'Sentra Tahu Lembang, Jawa Barat',
+          harvestMethod: 'Produksi harian tanpa pengawet dan tanpa tawas',
+          certifications: ['Halal Kemenag', 'Bebas Pengawet Kimia'],
+        },
+        {
+          name: 'Edamame segar',
+          origin: 'Petani Mitra Jember, Jawa Timur',
+          harvestMethod: 'Dipetik segar subuh hari dan direbus higienis',
+          certifications: ['Global GAP Certified'],
+        },
+        {
+          name: 'Alpukat mentega',
+          origin: 'Perkebunan Cikuray Garut, Jawa Barat',
+          harvestMethod: 'Petik pohon tua kaya lemak tak jenuh alami',
+          certifications: ['Prima-3 Keamanan Buah'],
+        },
+        {
+          name: 'Romaine segar',
+          origin: 'Greenhouse Parongpong, Bandung Barat',
+          harvestMethod: 'Panen daun muda renyah bebas pestisida',
+          certifications: ['Good Agricultural Practices (GAP)'],
+        },
+      ],
+      grammage: [
+        { label: 'Tahu organik panggang', weight: '130 gram' },
+        { label: 'Edamame rebus', weight: '70 gram' },
+        { label: 'Alpukat iris', weight: '60 gram' },
+        { label: 'Romaine dan yoghurt dressing', weight: '90 gram' },
+      ],
+      chefNotes:
+        'Poke disajikan segar tanpa pemanasan ulang untuk menjaga tekstur renyah. Dressing yoghurt rendah lemak memberi rasa creamy tanpa kalori berlebih.',
+      allergenWarning: ['Mengandung kedelai (tahu, edamame)', 'Mengandung susu (yoghurt)'],
+    },
+    {
+      id: 'ayam-madura-wl25',
+      skuCode: 'ND-WL-025',
+      qrCode: 'ND-VERIFY-WL-025-2026',
+      isActive: true,
+      batchCode: '2026-10-08-L25',
+      ticketNumber: 'Tiket produksi dapur #0252',
+      shortTitle: 'Ayam bumbu madura',
+      recipeTitle: 'Nasi ayam bakar bumbu madura dengan nasi cokelat organik',
+      category: 'Weight loss (lean & sculpt)',
+      portionWeightGrams: 405,
+      toleranceGrams: 4,
+      imageUrl: '/images/meals/chicken_keluwak.jpg',
+      imageCaption: 'Dokumentasi boks katering ayam bumbu madura sebelum segel dikunci (Dapur Sudirman)',
+      packagingTimestamp: 'Hari ini, 07.10 WIB (Dapur Sentral Sudirman)',
+      nutritionFacts: {
+        calories: 460,
+        proteinGrams: 40,
+        carbsGrams: 48,
+        fatGrams: 12,
+        fiberGrams: 7,
+        sodiumMg: 340,
+        glycemicIndex: 43,
+      },
+      labCertification: {
+        laboratory: 'PT Saraswanti Indo Genetech (SIG Laboratory)',
+        certificateNumber: 'SIG-LAB/2026/09116-ND',
+        testDate: '4 Oktober 2026',
+        status: 'Terverifikasi bebas residu pestisida, logam berat merkuri, dan formalin',
+        microbiology: 'Uji Salmonella sp dan E. coli dinyatakan negatif',
+        accuracyRating: 'Presisi gramatur lab 99.6%',
+      },
+      ingredientsSourcing: [
+        {
+          name: 'Dada ayam rempah hitam',
+          origin: 'Peternakan Ayam Sukabumi, Jawa Barat',
+          harvestMethod: 'Ayam sehat tanpa suntik hormon dengan pakan jagung alami',
+          certifications: ['NKV Veteriner', 'Halal Indonesia'],
+        },
+        {
+          name: 'Beras cokelat organik',
+          origin: 'Koperasi Tani Klaten, Jawa Tengah',
+          harvestMethod: 'Giling sekam minimum mempertahankan lapisan bekatul',
+          certifications: ['SNI Organik Indonesia'],
+        },
+        {
+          name: 'Cabai rawit dan bawang sambal kukus',
+          origin: 'Perkebunan Ciwidey, Jawa Barat',
+          harvestMethod: 'Panen segar 07 Oktober 2026 dikukus tanpa minyak berlebih',
+          certifications: ['Good Agricultural Practices (GAP)'],
+        },
+        {
+          name: 'Rempah madura sangrai',
+          origin: 'Pasar Rempah Sumenep, Madura, Jawa Timur',
+          harvestMethod: 'Sangrai tradisional tanpa pewarna dan tanpa MSG',
+          certifications: ['Rempah Nusantara Autentik'],
+        },
+      ],
+      grammage: [
+        { label: 'Dada ayam bakar madura', weight: '175 gram' },
+        { label: 'Nasi cokelat organik', weight: '125 gram' },
+        { label: 'Lalapan segar', weight: '60 gram' },
+        { label: 'Sambal kukus', weight: '30 ml' },
+      ],
+      chefNotes:
+        'Bumbu madura diracik dari rempah sangrai dengan rasa manis gurih seimbang. Sambal disajikan kukus agar ringan dan tetap ramah untuk program defisit kalori.',
+      allergenWarning: ['Bebas kacang tanah', 'Bebas susu sapi'],
+    },
+    {
+      id: 'salmon-asparagus-wl26',
+      skuCode: 'ND-WL-026',
+      qrCode: 'ND-VERIFY-WL-026-2026',
+      isActive: true,
+      batchCode: '2026-10-08-L26',
+      ticketNumber: 'Tiket produksi dapur #0253',
+      shortTitle: 'Salmon asparagus herba',
+      recipeTitle: 'Herb baked salmon asparagus dengan tomat ceri',
+      category: 'Weight loss (lean & sculpt)',
+      portionWeightGrams: 390,
+      toleranceGrams: 4,
+      imageUrl: '/images/meals/salmon_meal.jpg',
+      imageCaption: 'Dokumentasi boks katering salmon asparagus herba sebelum segel dikunci (Dapur Sudirman)',
+      packagingTimestamp: 'Hari ini, 07.15 WIB (Dapur Sentral Sudirman)',
+      nutritionFacts: {
+        calories: 420,
+        proteinGrams: 34,
+        carbsGrams: 15,
+        fatGrams: 24,
+        fiberGrams: 5.2,
+        sodiumMg: 310,
+        glycemicIndex: 36,
+      },
+      labCertification: {
+        laboratory: 'PT Saraswanti Indo Genetech (SIG Laboratory)',
+        certificateNumber: 'SIG-LAB/2026/09117-ND',
+        testDate: '4 Oktober 2026',
+        status: 'Terverifikasi bebas residu pestisida, logam berat merkuri, dan formalin',
+        microbiology: 'Uji Salmonella sp dan E. coli dinyatakan negatif',
+        accuracyRating: 'Presisi gramatur lab 99.6%',
+      },
+      ingredientsSourcing: [
+        {
+          name: 'Salmon Norwegia fillet herba',
+          origin: 'Fjord Barat Norwegia rantai dingin 0 sampai 2 derajat',
+          harvestMethod: 'Pengiriman cepat tanpa pembekuan berulang',
+          certifications: ['ASC Certified', 'BAP 4-Star'],
+        },
+        {
+          name: 'Asparagus hijau segar',
+          origin: 'Kelompok Tani Kopeng, Jawa Tengah',
+          harvestMethod: 'Dipetik subuh 07 Oktober 2026 kualitas ekspor',
+          certifications: ['Good Agricultural Practices (GAP)'],
+        },
+        {
+          name: 'Mentega zaitun',
+          origin: 'Olahan Dapur Sentral Sudirman, Jakarta',
+          harvestMethod: 'Campur minyak zaitun perasan dingin dan herba segar',
+          certifications: ['Non-GMO Verified'],
+        },
+        {
+          name: 'Tomat ceri organik',
+          origin: 'Greenhouse Lembang, Jawa Barat',
+          harvestMethod: 'Panen merah pohon kaya likopen alami',
+          certifications: ['Bebas Pestisida Kimia'],
+        },
+      ],
+      grammage: [
+        { label: 'Salmon panggang herba', weight: '180 gram' },
+        { label: 'Asparagus panggang', weight: '80 gram' },
+        { label: 'Tomat ceri panggang', weight: '60 gram' },
+        { label: 'Oles mentega zaitun', weight: '20 ml' },
+      ],
+      chefNotes:
+        'Salmon dipanggang suhu rendah dengan herba segar agar omega 3 tetap terjaga. Asparagus dan tomat ceri memberi serat dan warna segar dalam satu boks.',
+      allergenWarning: ['Mengandung ikan laut (salmon)', 'Mengandung susu (mentega)'],
+    },
+    {
+      id: 'burrito-quinoa-wl27',
+      skuCode: 'ND-WL-027',
+      qrCode: 'ND-VERIFY-WL-027-2026',
+      isActive: true,
+      batchCode: '2026-10-08-L27',
+      ticketNumber: 'Tiket produksi dapur #0254',
+      shortTitle: 'Burrito bowl quinoa',
+      recipeTitle: 'Mexican chicken burrito bowl dengan quinoa organik',
+      category: 'Weight loss (lean & sculpt)',
+      portionWeightGrams: 415,
+      toleranceGrams: 4,
+      imageUrl: '/images/meals/chicken_honey_sesame.jpg',
+      imageCaption: 'Dokumentasi boks katering burrito bowl quinoa sebelum segel dikunci (Dapur Sudirman)',
+      packagingTimestamp: 'Hari ini, 07.25 WIB (Dapur Sentral Sudirman)',
+      nutritionFacts: {
+        calories: 480,
+        proteinGrams: 44,
+        carbsGrams: 42,
+        fatGrams: 15,
+        fiberGrams: 7.8,
+        sodiumMg: 360,
+        glycemicIndex: 45,
+      },
+      labCertification: {
+        laboratory: 'PT Saraswanti Indo Genetech (SIG Laboratory)',
+        certificateNumber: 'SIG-LAB/2026/09118-ND',
+        testDate: '4 Oktober 2026',
+        status: 'Terverifikasi bebas residu pestisida, logam berat merkuri, dan formalin',
+        microbiology: 'Uji Salmonella sp dan E. coli dinyatakan negatif',
+        accuracyRating: 'Presisi gramatur lab 99.6%',
+      },
+      ingredientsSourcing: [
+        {
+          name: 'Dada ayam salsa',
+          origin: 'Peternakan Probiotik Sukabumi, Jawa Barat',
+          harvestMethod: 'Marinasi salsa tomat segar 8 jam tanpa pengawet',
+          certifications: ['Halal Kemenag', 'NKV Bebas Antibiotik'],
+        },
+        {
+          name: 'Quinoa organik',
+          origin: 'Kemitraan Tani Dieng, Jawa Tengah',
+          harvestMethod: 'Budi daya lereng pegunungan bebas herbisida sintetis',
+          certifications: ['SNI Organik Indonesia'],
+        },
+        {
+          name: 'Kacang merah dan jagung bakar',
+          origin: 'Koperasi Tani Grobogan dan Boyolali, Jawa Tengah',
+          harvestMethod: 'Rebus dan bakar tanpa minyak berlebih',
+          certifications: ['Good Agricultural Practices (GAP)'],
+        },
+        {
+          name: 'Alpukat guacamole',
+          origin: 'Perkebunan Garut, Jawa Barat',
+          harvestMethod: 'Tumbuk segar dengan perasan jeruk nipis alami',
+          certifications: ['Prima-3 Keamanan Buah'],
+        },
+      ],
+      grammage: [
+        { label: 'Ayam salsa panggang', weight: '170 gram' },
+        { label: 'Quinoa matang', weight: '120 gram' },
+        { label: 'Kacang merah dan jagung', weight: '80 gram' },
+        { label: 'Guacamole segar', weight: '45 gram' },
+      ],
+      chefNotes:
+        'Bowl ala Meksiko ini padat protein dengan quinoa pulen dan kacang merah berserat. Guacamole dibuat segar setiap pagi tanpa pengawet.',
+      allergenWarning: ['Bebas gluten', 'Bebas susu sapi'],
+    },
+    {
+      id: 'snapper-ginger-wl28',
+      skuCode: 'ND-WL-028',
+      qrCode: 'ND-VERIFY-WL-028-2026',
+      isActive: true,
+      batchCode: '2026-10-08-L28',
+      ticketNumber: 'Tiket produksi dapur #0255',
+      shortTitle: 'Snapper kuah jahe',
+      recipeTitle: 'Steamed snapper ginger broth dengan shiitake',
+      category: 'Weight loss (lean & sculpt)',
+      portionWeightGrams: 380,
+      toleranceGrams: 4,
+      imageUrl: '/images/meals/snapper_kemangi.jpg',
+      imageCaption: 'Dokumentasi boks katering snapper kuah jahe sebelum segel dikunci (Dapur Sudirman)',
+      packagingTimestamp: 'Hari ini, 07.35 WIB (Dapur Sentral Sudirman)',
+      nutritionFacts: {
+        calories: 350,
+        proteinGrams: 36,
+        carbsGrams: 20,
+        fatGrams: 8,
+        fiberGrams: 5,
+        sodiumMg: 240,
+        glycemicIndex: 32,
+      },
+      labCertification: {
+        laboratory: 'PT Saraswanti Indo Genetech (SIG Laboratory)',
+        certificateNumber: 'SIG-LAB/2026/09119-ND',
+        testDate: '4 Oktober 2026',
+        status: 'Terverifikasi bebas residu pestisida, logam berat merkuri, dan formalin',
+        microbiology: 'Uji Salmonella sp dan E. coli dinyatakan negatif',
+        accuracyRating: 'Presisi gramatur lab 99.6%',
+      },
+      ingredientsSourcing: [
+        {
+          name: 'Kakap putih kukus',
+          origin: 'Karamba Teluk Hurun Lampung',
+          harvestMethod: 'Budi daya air laut alami tanpa kimia sintetis',
+          certifications: ['IndoGAP Kelautan', 'Bebas Merkuri'],
+        },
+        {
+          name: 'Jahe emprit segar',
+          origin: 'Petani Rempah Boyolali, Jawa Tengah',
+          harvestMethod: 'Rimpang segar perasan pertama untuk kaldu bening',
+          certifications: ['Non-GMO Verified'],
+        },
+        {
+          name: 'Wortel baby organik',
+          origin: 'Dataran Tinggi Dieng, Jawa Tengah',
+          harvestMethod: 'Panen muda manis alami kaya beta karoten',
+          certifications: ['SNI Organik Indonesia'],
+        },
+        {
+          name: 'Shiitake segar',
+          origin: 'Budi daya jamur Pacet Cianjur, Jawa Barat',
+          harvestMethod: 'Panen media kayu alami tanpa pestisida',
+          certifications: ['Prima-2 Pertanian'],
+        },
+      ],
+      grammage: [
+        { label: 'Fillet kakap putih', weight: '175 gram' },
+        { label: 'Kuah jahe bening', weight: '80 ml' },
+        { label: 'Wortel baby kukus', weight: '65 gram' },
+        { label: 'Shiitake iris', weight: '60 gram' },
+      ],
+      chefNotes:
+        'Kakap dikukus dengan jahe hangat sehingga aroma segar dan tekstur lembut. Kuah bening rendah natrium cocok untuk makan malam ringan.',
+      allergenWarning: ['Mengandung ikan laut (kakap putih)'],
+    },
+    {
+      id: 'tenderloin-cilembu-wl29',
+      skuCode: 'ND-WL-029',
+      qrCode: 'ND-VERIFY-WL-029-2026',
+      isActive: true,
+      batchCode: '2026-10-08-L29',
+      ticketNumber: 'Tiket produksi dapur #0256',
+      shortTitle: 'Tenderloin ubi Cilembu',
+      recipeTitle: 'Tenderloin steak with mashed sweet potato Cilembu',
+      category: 'Weight loss (lean & sculpt)',
+      portionWeightGrams: 420,
+      toleranceGrams: 4,
+      imageUrl: '/images/meals/beef_tenderloin_mash.jpg',
+      imageCaption: 'Dokumentasi boks katering tenderloin ubi Cilembu sebelum segel dikunci (Dapur Sudirman)',
+      packagingTimestamp: 'Hari ini, 07.45 WIB (Dapur Sentral Sudirman)',
+      nutritionFacts: {
+        calories: 490,
+        proteinGrams: 41,
+        carbsGrams: 40,
+        fatGrams: 16,
+        fiberGrams: 6,
+        sodiumMg: 420,
+        glycemicIndex: 46,
+      },
+      labCertification: {
+        laboratory: 'PT Saraswanti Indo Genetech (SIG Laboratory)',
+        certificateNumber: 'SIG-LAB/2026/09120-ND',
+        testDate: '4 Oktober 2026',
+        status: 'Terverifikasi bebas residu pestisida, logam berat merkuri, dan formalin',
+        microbiology: 'Uji Salmonella sp dan E. coli dinyatakan negatif',
+        accuracyRating: 'Presisi gramatur lab 99.6%',
+      },
+      ingredientsSourcing: [
+        {
+          name: 'Tenderloin panggang',
+          origin: 'Kemitraan Ternak Selo Boyolali, Jawa Tengah',
+          harvestMethod: 'Pemotongan RPH halal higienis dry aged 14 hari',
+          certifications: ['Sertifikasi Halal MUI', 'NKV Daging'],
+        },
+        {
+          name: 'Ubi Cilembu tumbuk',
+          origin: 'Petani Ubi Cilembu Sumedang, Jawa Barat',
+          harvestMethod: 'Panggang madu alami lalu ditumbuk lembut',
+          certifications: ['Prima-2 Keamanan Pangan'],
+        },
+        {
+          name: 'Buncis baby kukus',
+          origin: 'Kelompok Tani Dieng, Jawa Tengah',
+          harvestMethod: 'Dipetik 07 Oktober 2026 pukul 04.00 WIB',
+          certifications: ['SNI Organik Indonesia'],
+        },
+        {
+          name: 'Bawang putih panggang',
+          origin: 'Lereng Sindoro Temanggung, Jawa Tengah',
+          harvestMethod: 'Panggang utuh untuk aroma manis alami',
+          certifications: ['Organik Indonesia'],
+        },
+      ],
+      grammage: [
+        { label: 'Tenderloin panggang', weight: '160 gram' },
+        { label: 'Ubi Cilembu tumbuk', weight: '130 gram' },
+        { label: 'Buncis kukus', weight: '70 gram' },
+        { label: 'Jus daging alami', weight: '30 ml' },
+      ],
+      chefNotes:
+        'Tenderloin dipanggang medium dengan crust karamel tipis dan bagian dalam juicy. Ubi Cilembu tumbuk memberi rasa manis alami tanpa gula tambahan.',
+      allergenWarning: ['Mengandung daging sapi'],
+    },
+    {
+      id: 'padthai-shirataki-wl30',
+      skuCode: 'ND-WL-030',
+      qrCode: 'ND-VERIFY-WL-030-2026',
+      isActive: true,
+      batchCode: '2026-10-08-L30',
+      ticketNumber: 'Tiket produksi dapur #0257',
+      shortTitle: 'Pad thai shirataki',
+      recipeTitle: 'Tempeh vegetable pad thai shirataki',
+      category: 'Weight loss (lean & sculpt)',
+      portionWeightGrams: 385,
+      toleranceGrams: 4,
+      imageUrl: '/images/meals/silken_tofu_shiitake.jpg',
+      imageCaption: 'Dokumentasi boks katering pad thai shirataki sebelum segel dikunci (Dapur Sudirman)',
+      packagingTimestamp: 'Hari ini, 08.00 WIB (Dapur Sentral Sudirman)',
+      nutritionFacts: {
+        calories: 370,
+        proteinGrams: 22,
+        carbsGrams: 32,
+        fatGrams: 14,
+        fiberGrams: 8.2,
+        sodiumMg: 290,
+        glycemicIndex: 39,
+      },
+      labCertification: {
+        laboratory: 'PT Saraswanti Indo Genetech (SIG Laboratory)',
+        certificateNumber: 'SIG-LAB/2026/09121-ND',
+        testDate: '4 Oktober 2026',
+        status: 'Terverifikasi bebas residu pestisida, logam berat merkuri, dan formalin',
+        microbiology: 'Uji Salmonella sp dan E. coli dinyatakan negatif',
+        accuracyRating: 'Presisi gramatur lab 99.6%',
+      },
+      ingredientsSourcing: [
+        {
+          name: 'Tempe lokal bakar',
+          origin: 'Koperasi Kedelai Grobogan, Jawa Tengah',
+          harvestMethod: 'Fermentasi ragi tradisional daun pisang higienis',
+          certifications: ['SNI Tempe Indonesia', 'Halal Kemenag'],
+        },
+        {
+          name: 'Kwetiau shirataki',
+          origin: 'Sentra Porang Nganjuk, Jawa Timur',
+          harvestMethod: 'Proses glukomanan murni tinggi serat larut air',
+          certifications: ['BPOM RI', 'Halal Kemenag'],
+        },
+        {
+          name: 'Tauge segar',
+          origin: 'Petani Kecambah Bogor, Jawa Barat',
+          harvestMethod: 'Panen harian tanpa pemutih dan tanpa pengawet',
+          certifications: ['Pangan Segar Aman'],
+        },
+        {
+          name: 'Asam jawa asli',
+          origin: 'Perkebunan Rakyat Klaten, Jawa Tengah',
+          harvestMethod: 'Peras buah matang pohon tanpa pewarna buatan',
+          certifications: ['Non-GMO Verified'],
+        },
+      ],
+      grammage: [
+        { label: 'Tempe bakar iris', weight: '110 gram' },
+        { label: 'Kwetiau shirataki', weight: '120 gram' },
+        { label: 'Tauge dan sayur', weight: '80 gram' },
+        { label: 'Saus asam jawa', weight: '35 ml' },
+      ],
+      chefNotes:
+        'Pad thai versi ringan ini memakai kwetiau shirataki rendah kalori dengan saus asam jawa segar. Tempe bakar memberi protein nabati yang mengenyangkan.',
+      allergenWarning: ['Mengandung kedelai (tempe)'],
+    },
   ];
 
   constructor(@Inject(RECIPES_REPOSITORY) private readonly recipesRepo: RecipesRepository) {}
 
-  public static readonly ACTIVE_MEAL_CAP = 20;
+  public static readonly ACTIVE_MEAL_CAP = 30;
   public static readonly IMAGE_MAX_BYTES = 2 * 1024 * 1024;
   public static readonly IMAGE_MIME_ALLOWLIST = ['image/jpeg', 'image/png', 'image/webp'];
 

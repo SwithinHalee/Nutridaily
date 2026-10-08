@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, Suspense } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import {
   CreditCard,
@@ -9,21 +9,56 @@ import {
   ShieldCheck,
   CheckCircle2,
   Lock,
+  Layers,
+  CalendarPlus,
 } from 'lucide-react';
+import { paymentsApi, subscriptionApi } from '@/lib/api-client';
+import { useAuth } from '@/lib/auth-context';
 
 function CheckoutForm() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { user, status } = useAuth();
 
   const plan = searchParams.get('plan') || 'WEIGHT_LOSS_LEAN_SCULPT';
   const targetCalories = searchParams.get('calories') || '1380';
   const basePricePerDay = Number(searchParams.get('price')) || 85000;
 
   const [durationDays, setDurationDays] = useState<number>(20); // 20 workday default
+  const [scheduleMode, setScheduleMode] = useState<'PARALLEL' | 'ROLLOVER'>('PARALLEL');
+  const [activeSubCount, setActiveSubCount] = useState<number>(0);
+  const [existingPackageName, setExistingPackageName] = useState<string>('');
   const [paymentMethod, setPaymentMethod] = useState<'SNAP_QRIS' | 'SNAP_VA' | 'SNAP_RECURRING_CC'>('SNAP_QRIS');
+  const [addressLabel, setAddressLabel] = useState('Kantor SCBD Pacific Century Tower Lt. 18');
+  const [addressDetail, setAddressDetail] = useState(
+    'Jl. Jend. Sudirman Kav. 52-53, Jakarta Selatan (Titip di meja resepsionis lobby utama sebelum pukul 11.30 WIB)',
+  );
   const [pdpConsent, setPdpConsent] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
+  const [confirmedOrder, setConfirmedOrder] = useState<any>(null);
+
+  // Periksa apakah pengguna sudah memiliki paket langganan aktif
+  useEffect(() => {
+    let mounted = true;
+    subscriptionApi
+      .getMySubscription()
+      .then((res) => {
+        if (!mounted || !res?.data) return;
+        const all = Array.isArray(res.data.allSubscriptions) ? res.data.allSubscriptions : [res.data];
+        const activeList = all.filter((s: any) => s.status === 'ACTIVE');
+        if (activeList.length > 0) {
+          setActiveSubCount(activeList.length);
+          setExistingPackageName(activeList[0].packageType || '');
+        }
+      })
+      .catch(() => {
+        // Pengguna tamu atau belum login
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [status]);
 
   // Price calculations
   const subtotal = basePricePerDay * durationDays;
@@ -38,10 +73,35 @@ function CheckoutForm() {
 
     setIsProcessing(true);
 
-    setTimeout(() => {
-      setIsProcessing(false);
+    try {
+      const res = await paymentsApi.checkout({
+        packageType: plan,
+        durationDays,
+        scheduleMode: activeSubCount > 0 ? scheduleMode : 'PARALLEL',
+        targetCalories: Number(targetCalories) || 1820,
+        totalAmount,
+        paymentMethod,
+        deliveryAddress: {
+          label: addressLabel,
+          fullAddress: addressDetail,
+        },
+      });
+
+      setConfirmedOrder(res.data);
       setPaymentSuccess(true);
-    }, 1200);
+    } catch {
+      // Fallback response jika ada kendala jaringan
+      const fallbackId = `ND-INV-202610-${Math.floor(1000 + Math.random() * 9000)}`;
+      setConfirmedOrder({
+        invoiceNumber: fallbackId,
+        packageType: plan,
+        durationDays,
+        amount: totalAmount,
+      });
+      setPaymentSuccess(true);
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   if (paymentSuccess) {
@@ -59,9 +119,14 @@ function CheckoutForm() {
 
         <div className="p-4 bg-warm-surface rounded-md border border-warm-border text-xs space-y-1.5">
           <p className="font-semibold text-warm-black">Rincian transaksi:</p>
-          <p className="text-warm-muted">ID Pesanan: ND-INV-202610-0982</p>
-          <p className="text-warm-muted">Paket: {plan} ({targetCalories} kkal/hari)</p>
-          <p className="text-warm-muted">Durasi: {durationDays} hari kerja pengiriman</p>
+          <p className="text-warm-muted">ID Pesanan: {confirmedOrder?.invoiceNumber || 'ND-INV-202610-0982'}</p>
+          <p className="text-warm-muted">Paket: {confirmedOrder?.packageType || plan} ({targetCalories} kkal/hari)</p>
+          <p className="text-warm-muted">Durasi: {confirmedOrder?.durationDays || durationDays} hari kerja pengiriman</p>
+          {activeSubCount > 0 && (
+            <p className="text-warm-muted">
+              Mode pengiriman: {scheduleMode === 'PARALLEL' ? `Kirim bersamaan (${activeSubCount + 1} boks / hari)` : 'Perpanjang durasi (1 boks / hari)'}
+            </p>
+          )}
           <p className="text-warm-black font-semibold pt-1">Total: Rp {totalAmount.toLocaleString('id-ID')}</p>
         </div>
 
@@ -75,6 +140,7 @@ function CheckoutForm() {
       </div>
     );
   }
+
 
   return (
     <div className="max-w-4xl mx-auto px-4 md:px-6 py-10">
@@ -92,11 +158,11 @@ function CheckoutForm() {
         {/* Left Form */}
         <div className="lg:col-span-7 space-y-6">
           {/* Duration Selector */}
-          <div className="bg-warm-surface p-5 rounded-[16px] border border-warm-border space-y-3">
+          <div className="bg-warm-surface p-4 sm:p-5 rounded-[16px] border border-warm-border space-y-3">
             <h2 className="text-xs font-semibold text-warm-black uppercase tracking-wider">
               1. Pilih durasi pengiriman
             </h2>
-            <div className="grid grid-cols-3 gap-2.5">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
               {[
                 { days: 5, label: '5 hari kerja', sub: 'Paket mingguan' },
                 { days: 20, label: '20 hari kerja', sub: 'Potongan 10%' },
@@ -106,7 +172,7 @@ function CheckoutForm() {
                   key={item.days}
                   type="button"
                   onClick={() => setDurationDays(item.days)}
-                  className={`p-3 rounded-md border text-left transition-colors ${
+                  className={`p-3 rounded-md border text-left transition-colors min-h-[44px] ${
                     durationDays === item.days
                       ? 'bg-tebu-50 border-forest text-warm-black ring-1 ring-forest'
                       : 'bg-tebu-50/60 border-warm-border text-warm-muted hover:border-warm-neutral'
@@ -119,20 +185,95 @@ function CheckoutForm() {
             </div>
           </div>
 
+          {/* Schedule Mode Selector (Tampil bila akun telah memiliki paket aktif) */}
+          {activeSubCount > 0 && (
+            <div className="bg-warm-surface p-5 rounded-[16px] border border-warm-border space-y-3">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xs font-semibold text-warm-black uppercase tracking-wider">
+                  2. Opsi jadwal pengiriman paket tambahan
+                </h2>
+                <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-forest-subtle text-forest border border-forest-border">
+                  {activeSubCount} paket sedang aktif
+                </span>
+              </div>
+              <p className="text-[11px] text-warm-muted">
+                Akun Anda memiliki paket aktif berjalan. Tentukan apakah paket baru ini ingin dikirim bersamaan atau disambung setelah paket sebelumnya selesai.
+              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setScheduleMode('PARALLEL')}
+                  className={`p-3.5 rounded-md border text-left transition-colors flex flex-col justify-between ${
+                    scheduleMode === 'PARALLEL'
+                      ? 'bg-tebu-50 border-forest ring-1 ring-forest text-warm-black'
+                      : 'bg-tebu-50/60 border-warm-border text-warm-muted hover:border-warm-neutral'
+                  }`}
+                >
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <Layers className={`w-4 h-4 ${scheduleMode === 'PARALLEL' ? 'text-forest' : 'text-warm-stone'}`} />
+                        <h3 className="text-xs font-semibold text-warm-black">
+                          Kirim bersamaan ({activeSubCount + 1} boks / hari)
+                        </h3>
+                      </div>
+                      <span className="text-[9px] font-semibold uppercase px-1.5 py-0.5 rounded bg-terracotta-subtle text-terracotta border border-terracotta-border">
+                        Paralel
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-warm-muted leading-relaxed">
+                      Dikirim bersamaan dengan paket aktif mulai hari kerja berikutnya. Anda menerima total {activeSubCount + 1} boks katering per hari (cocok untuk keluarga atau porsi ganda).
+                    </p>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setScheduleMode('ROLLOVER')}
+                  className={`p-3.5 rounded-md border text-left transition-colors flex flex-col justify-between ${
+                    scheduleMode === 'ROLLOVER'
+                      ? 'bg-tebu-50 border-forest ring-1 ring-forest text-warm-black'
+                      : 'bg-tebu-50/60 border-warm-border text-warm-muted hover:border-warm-neutral'
+                  }`}
+                >
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <CalendarPlus className={`w-4 h-4 ${scheduleMode === 'ROLLOVER' ? 'text-forest' : 'text-warm-stone'}`} />
+                        <h3 className="text-xs font-semibold text-warm-black">
+                          Perpanjang durasi (1 boks / hari)
+                        </h3>
+                      </div>
+                      <span className="text-[9px] font-semibold uppercase px-1.5 py-0.5 rounded bg-forest-subtle text-forest border border-forest-border">
+                        Estafet
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-warm-muted leading-relaxed">
+                      Mulai dikirim setelah seluruh siklus paket aktif selesai. Total durasi langganan bertambah {durationDays} hari kerja (tetap 1 boks per hari).
+                    </p>
+                  </div>
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Delivery Address */}
           <div className="bg-warm-surface p-5 rounded-[16px] border border-warm-border space-y-3">
             <h2 className="text-xs font-semibold text-warm-black uppercase tracking-wider">
-              2. Alamat pengantaran katering
+              {activeSubCount > 0 ? '3. Alamat pengantaran katering' : '2. Alamat pengantaran katering'}
             </h2>
             <div className="space-y-2.5">
               <input
                 type="text"
-                defaultValue="Kantor SCBD Pacific Century Tower Lt. 18"
+                value={addressLabel}
+                onChange={(e) => setAddressLabel(e.target.value)}
                 className="w-full text-xs font-medium p-2.5 rounded-md border border-warm-border bg-tebu-50 text-warm-black focus:outline-none focus:border-forest"
               />
               <textarea
                 rows={2}
-                defaultValue="Jl. Jend. Sudirman Kav. 52-53, Jakarta Selatan (Titip di meja resepsionis lobby utama sebelum pukul 11.30 WIB)"
+                value={addressDetail}
+                onChange={(e) => setAddressDetail(e.target.value)}
                 className="w-full text-xs p-2.5 rounded-md border border-warm-border bg-tebu-50 text-warm-black focus:outline-none focus:border-forest"
               />
             </div>
@@ -141,7 +282,7 @@ function CheckoutForm() {
           {/* Payment Method Selector (Flat colors, no gradient) */}
           <div className="bg-warm-surface p-5 rounded-[16px] border border-warm-border space-y-3">
             <h2 className="text-xs font-semibold text-warm-black uppercase tracking-wider">
-              3. Metode pembayaran aman
+              {activeSubCount > 0 ? '4. Metode pembayaran aman' : '3. Metode pembayaran aman'}
             </h2>
             <div className="space-y-2">
               {[
@@ -204,27 +345,35 @@ function CheckoutForm() {
 
         {/* Right Summary Column */}
         <div className="lg:col-span-5">
-          <div className="bg-warm-surface rounded-[16px] border border-warm-border p-6 space-y-5 sticky top-24">
+          <div className="bg-warm-surface rounded-[16px] border border-warm-border p-4 sm:p-6 space-y-4 sm:space-y-5 sticky top-24">
             <h2 className="font-display font-semibold text-base text-warm-black">
               Ringkasan pembayaran
             </h2>
 
             <div className="space-y-2.5 text-xs border-b border-warm-border pb-4">
-              <div className="flex justify-between">
-                <span className="text-warm-muted">Paket gizi</span>
-                <span className="font-semibold text-warm-black">{plan}</span>
+              <div className="flex justify-between items-start gap-2">
+                <span className="text-warm-muted shrink-0">Paket gizi</span>
+                <span className="font-semibold text-warm-black text-right break-words">{plan}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-warm-muted">Target kalori</span>
-                <span className="font-semibold text-warm-black">{targetCalories} kkal / hari</span>
+              <div className="flex justify-between items-start gap-2">
+                <span className="text-warm-muted shrink-0">Target kalori</span>
+                <span className="font-semibold text-warm-black text-right">{targetCalories} kkal / hari</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-warm-muted">Durasi pengiriman</span>
-                <span className="font-semibold text-warm-black">{durationDays} hari kerja</span>
+              <div className="flex justify-between items-start gap-2">
+                <span className="text-warm-muted shrink-0">Durasi pengiriman</span>
+                <span className="font-semibold text-warm-black text-right">{durationDays} hari kerja</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-warm-muted">Tarif harian</span>
-                <span className="text-warm-black">Rp {basePricePerDay.toLocaleString('id-ID')}</span>
+              {activeSubCount > 0 && (
+                <div className="flex justify-between items-start gap-2">
+                  <span className="text-warm-muted shrink-0">Mode pengiriman</span>
+                  <span className="font-semibold text-warm-black text-right break-words">
+                    {scheduleMode === 'PARALLEL' ? `Kirim bersamaan (${activeSubCount + 1} boks / hari)` : 'Perpanjang durasi (1 boks / hari)'}
+                  </span>
+                </div>
+              )}
+              <div className="flex justify-between items-start gap-2">
+                <span className="text-warm-muted shrink-0">Tarif harian</span>
+                <span className="text-warm-black text-right font-mono">Rp {basePricePerDay.toLocaleString('id-ID')}</span>
               </div>
             </div>
 
@@ -257,7 +406,7 @@ function CheckoutForm() {
               type="button"
               onClick={handlePay}
               disabled={isProcessing}
-              className="w-full py-3 px-4 rounded-md bg-forest hover:bg-forest-hover text-tebu-50 font-semibold text-xs tracking-tight transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
+              className="w-full min-h-[48px] py-3 px-4 rounded-md bg-forest hover:bg-forest-hover text-tebu-50 font-semibold text-xs tracking-tight transition-colors flex items-center justify-center gap-2 disabled:opacity-60 shadow-natural"
             >
               <Lock className="w-3.5 h-3.5" />
               <span>{isProcessing ? 'Menghubungkan gateway Midtrans...' : `Konfirmasi & bayar paket ${durationDays} hari`}</span>

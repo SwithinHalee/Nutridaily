@@ -9,7 +9,11 @@ export function renderPortalHomeView(): string {
   <link rel="shortcut icon" href="/favicon.ico">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600..700&family=Manrope:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600..700&family=Manrope:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
+  <noscript>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600..700&family=Manrope:wght@400;500;600;700&display=swap">
+  </noscript>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -353,7 +357,7 @@ export function renderPortalHomeView(): string {
           <h3 class="card-title">Portal admin & tele-gizi</h3>
         </div>
         <p class="card-desc">
-          Manajemen pelanggan RFM, rekam gizi klinis terenkripsi AES-256-GCM (UU PDP), repositori formularium 60 resep lengkap dengan foto makanan, dan log audit transaksi Midtrans.
+          Manajemen pelanggan RFM, rekam gizi klinis terenkripsi AES-256-GCM (UU PDP), repositori formularium 30 resep aktif fase validasi lengkap dengan foto makanan, dan log audit transaksi Midtrans.
         </p>
         <span class="card-cta">
           <span>Buka portal admin gizi</span>

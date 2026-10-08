@@ -41,34 +41,68 @@ export function AppFooter() {
             <Link href="/dashboard" className="hover:text-forest">Atur jadwal langganan</Link>
             <Link href="/account" className="hover:text-forest">Dashboard akun</Link>
             <Link href="/#calculator" className="hover:text-forest">Kalkulator TDEE</Link>
+            <Link href="/privacy" className="hover:text-forest">Privasi</Link>
+            <Link href="/privacy#privacy-dpo" className="hover:text-forest">Kontak DPO</Link>
           </div>
         </div>
       </footer>
 
-      {/* One-Thumb Mobile Navigation Bar (Ergonomic safe-area bottom) */}
-      <nav aria-label="Navigasi cepat ponsel" className="fixed bottom-0 inset-x-0 z-50 md:hidden bg-tebu-50 border-t border-warm-border text-warm-muted">
-        <div className="grid grid-cols-5 h-14 text-center text-[10px] font-medium">
-          <Link href="/" className="flex flex-col items-center justify-center hover:text-forest active:text-forest transition-colors">
+      {/* One-Thumb Mobile Navigation Bar: Fixed 56px content bar */}
+      <nav
+        aria-label="Navigasi cepat ponsel"
+        style={{ height: '56px' }}
+        className="fixed bottom-0 inset-x-0 z-50 md:hidden bg-white/98 backdrop-blur-md border-t border-warm-border text-warm-neutral shadow-[0_-4px_20px_rgba(26,19,16,0.12)] select-none pointer-events-auto transform-gpu"
+      >
+        <div className="grid grid-cols-5 h-[56px] text-center text-[10px] font-medium items-stretch">
+          <Link
+            href="/"
+            className={`flex flex-col items-center justify-center transition-colors h-[56px] tap-highlight-transparent ${
+              pathname === '/' ? 'text-forest font-semibold' : 'text-warm-neutral hover:text-forest active:text-forest'
+            }`}
+          >
             <Home className="w-4 h-4 mb-0.5" />
             <span>Beranda</span>
           </Link>
-          <Link href="/#calculator" className="flex flex-col items-center justify-center hover:text-forest active:text-forest transition-colors">
+          <Link
+            href="/#calculator"
+            className="flex flex-col items-center justify-center text-warm-neutral hover:text-forest active:text-forest transition-colors h-[56px] tap-highlight-transparent"
+          >
             <Calculator className="w-4 h-4 mb-0.5" />
             <span>Kalkulator</span>
           </Link>
-          <Link href="/dashboard" className="flex flex-col items-center justify-center hover:text-forest active:text-forest transition-colors">
+          <Link
+            href="/dashboard"
+            className={`flex flex-col items-center justify-center transition-colors h-[56px] tap-highlight-transparent ${
+              pathname?.startsWith('/dashboard') ? 'text-forest font-semibold' : 'text-warm-neutral hover:text-forest active:text-forest'
+            }`}
+          >
             <CalendarCheck className="w-4 h-4 mb-0.5" />
             <span>Langganan</span>
           </Link>
-          <Link href="/verify/ND-VERIFY-SALMON-2026" className="flex flex-col items-center justify-center hover:text-forest active:text-forest transition-colors">
+          <Link
+            href="/verify/ND-VERIFY-SALMON-2026"
+            className={`flex flex-col items-center justify-center transition-colors h-[56px] tap-highlight-transparent ${
+              pathname?.startsWith('/verify') ? 'text-forest font-semibold' : 'text-warm-neutral hover:text-forest active:text-forest'
+            }`}
+          >
             <QrCode className="w-4 h-4 mb-0.5" />
             <span>Label QR</span>
           </Link>
-          <Link href="/account" className="flex flex-col items-center justify-center hover:text-forest active:text-forest transition-colors">
+          <Link
+            href="/account"
+            className={`flex flex-col items-center justify-center transition-colors h-[56px] tap-highlight-transparent ${
+              pathname?.startsWith('/account') ? 'text-forest font-semibold' : 'text-warm-neutral hover:text-forest active:text-forest'
+            }`}
+          >
             <ShieldCheck className="w-4 h-4 mb-0.5" />
             <span>Akun</span>
           </Link>
         </div>
+        {/* Background extension under safe-area without altering the nav's 56px height */}
+        <div
+          aria-hidden="true"
+          className="absolute top-full inset-x-0 h-10 bg-white border-t border-transparent pointer-events-none"
+        />
       </nav>
     </>
   );

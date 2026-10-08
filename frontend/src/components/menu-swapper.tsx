@@ -2,9 +2,10 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { Calendar, RefreshCw, AlertCircle, Check, Clock, X, Lock } from 'lucide-react';
+import { Calendar, RefreshCw, AlertCircle, Check, Clock, X, Lock, Box } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { recipesApi, subscriptionApi } from '@/lib/api-client';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface MenuItem {
   id: string;
@@ -29,6 +30,7 @@ interface WeeklyDay {
   dateNum: string;
   fullDate: string;
   isToday: boolean;
+  isTomorrow?: boolean;
 }
 
 const DAY_NAMES = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat'];
@@ -46,6 +48,8 @@ function buildWeeklyDays(from: Date = new Date(), weekOffset = 0): WeeklyDay[] {
   const wib = new Date(utc + 3600000 * 7);
   const pad = (n: number) => String(n).padStart(2, '0');
   const todayStr = `${wib.getFullYear()}-${pad(wib.getMonth() + 1)}-${pad(wib.getDate())}`;
+  const tomorrowWib = new Date(wib.getTime() + 86400000);
+  const tomorrowStr = `${tomorrowWib.getFullYear()}-${pad(tomorrowWib.getMonth() + 1)}-${pad(tomorrowWib.getDate())}`;
   const todayDow = new Date(Date.UTC(wib.getFullYear(), wib.getMonth(), wib.getDate())).getUTCDay();
 
   const monday = new Date(Date.UTC(wib.getFullYear(), wib.getMonth(), wib.getDate()));
@@ -65,6 +69,7 @@ function buildWeeklyDays(from: Date = new Date(), weekOffset = 0): WeeklyDay[] {
       dateNum: `${pad(cursor.getUTCDate())} ${MONTH_SHORT[cursor.getUTCMonth()]}`,
       fullDate,
       isToday: fullDate === todayStr,
+      isTomorrow: fullDate === tomorrowStr,
     };
   });
 }
@@ -84,12 +89,41 @@ const CATEGORIES = [
   { id: 'Vitality', label: 'Vitality' },
 ];
 
+interface ActivePackageInfo {
+  id: string;
+  packageType: string;
+  packageName: string;
+  category: string | null;
+  upcomingOrders: Array<{
+    id: string;
+    orderDate: string;
+    recipeId: string;
+    recipeTitle: string;
+    status: string;
+  }>;
+}
+
+function formatPackageName(pkg: string): string {
+  const map: Record<string, string> = {
+    MAINTENANCE_VITALITY_DAILY: 'Maintenance vitality daily',
+    WEIGHT_LOSS_LEAN_SCULPT: 'Weight loss (lean & sculpt)',
+    MUSCLE_BUILD_HYPERTROPHY: 'Muscle building (hypertrophy)',
+    MUSCLE_GAIN_FIT_BUILD: 'Muscle gain (fit & build)',
+    PRE_DIABETES_GLUCO_BALANCE: 'Pre-diabetes gluco balance',
+    HYPERTENSION_DASH_CARDIO: 'Hypertension DASH cardio',
+    THERAPEUTIC_DIET: 'Therapeutic DASH diet',
+  };
+  return map[pkg] || pkg.replace(/_/g, ' ').toLowerCase();
+}
+
 // Paket langganan mengunci rotasi ke kategorinya. Tanpa paket, semua tampil.
 function packageToCategory(packageType: string | null | undefined): string | null {
-  if (packageType === 'WEIGHT_LOSS_LEAN_SCULPT') return 'Weight loss';
-  if (packageType === 'MUSCLE_GAIN_FIT_BUILD') return 'Muscle gain';
-  if (packageType === 'THERAPEUTIC_DIET') return 'Therapeutic DASH';
-  if (packageType === 'MAINTENANCE_VITALITY_DAILY') return 'Vitality';
+  if (!packageType) return null;
+  const p = packageType.toUpperCase();
+  if (p.includes('WEIGHT_LOSS')) return 'Weight loss';
+  if (p.includes('MUSCLE')) return 'Muscle gain';
+  if (p.includes('HYPERTENSION') || p.includes('PRE_DIABETES') || p.includes('THERAPEUTIC')) return 'Therapeutic DASH';
+  if (p.includes('VITALITY') || p.includes('MAINTENANCE')) return 'Vitality';
   return null;
 }
 
@@ -134,7 +168,7 @@ function addDaysKey(dateStr: string, delta: number): string {
 function getDayLock(fullDate: string, now: Date): { locked: boolean; reason: string | null } {
   const wib = getWibParts(now);
   if (fullDate <= wib.dateStr) {
-    return { locked: true, reason: 'Pesanan hari ini telah masuk proses dapur dan tidak dapat diubah.' };
+    return { locked: true, reason: 'Pesanan sedang diproses dapur.' };
   }
   if (fullDate === addDaysKey(wib.dateStr, 1) && wib.hour >= 20) {
     return { locked: true, reason: 'Batas 20.00 WIB telah lewat. Dapur sedang menyiapkan menu besok.' };
@@ -142,7 +176,19 @@ function getDayLock(fullDate: string, now: Date): { locked: boolean; reason: str
   return { locked: false, reason: null };
 }
 
-export default function MenuSwapper() {
+export interface MenuSwapperProps {
+  id?: string;
+  className?: string;
+  containerClassName?: string;
+  onMealSwapped?: (dayDate: string, mealTitle: string) => void;
+}
+
+export default function MenuSwapper({
+  id = 'menu-catalog',
+  className,
+  containerClassName,
+  onMealSwapped,
+}: MenuSwapperProps = {}) {
   const { status } = useAuth();
   const isAuthenticated = status === 'authenticated';
 
@@ -152,9 +198,12 @@ export default function MenuSwapper() {
   const [weekOffset, setWeekOffset] = useState<0 | 1>(0);
   const [reloadNonce, setReloadNonce] = useState<number>(0);
   const [selectedDayIndex, setSelectedDayIndex] = useState<number>(() => defaultSelectedIndex(DEFAULT_DAYS));
-  const [weeklySchedule, setWeeklySchedule] = useState<Record<string, string>>({});
+  const [activePackages, setActivePackages] = useState<ActivePackageInfo[]>([]);
+  const [selectedPackageIndex, setSelectedPackageIndex] = useState<number>(0);
+  const [weeklySchedules, setWeeklySchedules] = useState<Record<string, Record<string, string>>>({});
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [lockedCategory, setLockedCategory] = useState<string | null>(null);
+  const [subscriptionId, setSubscriptionId] = useState<string | null>(null);
   const [viewState, setViewState] = useState<'DEFAULT' | 'LOADING' | 'EMPTY' | 'ERROR'>('DEFAULT');
   const [swapFeedback, setSwapFeedback] = useState<string | null>(null);
   const feedbackTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -169,39 +218,90 @@ export default function MenuSwapper() {
     const catalogRequest = recipesApi.getCatalog(weekOffset === 1 ? 'next' : 'current');
     const packageRequest = isAuthenticated
       ? subscriptionApi.getMySubscription().then(
-          (res) => packageToCategory(res.data?.packageType),
-          () => null,
+          (res) => {
+            if (!res?.data) return { packages: [], primarySubId: null };
+            const allSubs = Array.isArray(res.data.allSubscriptions)
+              ? res.data.allSubscriptions
+              : [res.data];
+            const activeSubs = allSubs.filter((s: any) => s.status === 'ACTIVE');
+            const pkgs: ActivePackageInfo[] = activeSubs.map((sub: any) => ({
+              id: sub.id,
+              packageType: sub.packageType,
+              packageName: formatPackageName(sub.packageType),
+              category: packageToCategory(sub.packageType),
+              upcomingOrders: sub.upcomingOrders || [],
+            }));
+            return {
+              packages: pkgs,
+              primarySubId: res.data.id || (pkgs[0]?.id ?? null),
+            };
+          },
+          () => ({ packages: [], primarySubId: null }),
         )
-      : Promise.resolve(null);
+      : Promise.resolve({ packages: [], primarySubId: null });
+
     Promise.all([catalogRequest, packageRequest])
-      .then(([res, locked]) => {
+      .then(([res, packageInfo]) => {
         if (!mounted) return;
         const days = res.data?.days;
         const meals = res.data?.meals;
         const hasSchedule =
           Array.isArray(days) && days.length > 0 && Array.isArray(meals) && meals.length > 0;
+        const pkgs = packageInfo.packages || [];
+        setActivePackages(pkgs);
+        if (packageInfo.primarySubId) {
+          setSubscriptionId(packageInfo.primarySubId);
+        }
+        const firstLock = pkgs[0]?.category || null;
+
         if (hasSchedule) {
           setWeeklyDays(days);
           setMenuOptions(meals);
           setSelectedDayIndex(defaultSelectedIndex(days));
-          setLockedCategory(locked);
-          setSelectedCategory(locked || 'ALL');
-          const pool = locked ? filterByCategory(meals, locked) : meals;
-          const initialSchedule: Record<string, string> = {};
-          days.forEach((d: WeeklyDay) => {
-            const covering = pool.filter((m) => mealCoversDay(m, d.fullDate));
-            const m = covering.length > 0 ? covering[0] : undefined;
-            if (m) initialSchedule[d.fullDate] = m.id;
-          });
-          setWeeklySchedule(initialSchedule);
+          setLockedCategory(firstLock);
+          setSelectedCategory(firstLock || 'ALL');
+
+          const schedulesMap: Record<string, Record<string, string>> = {};
+          if (pkgs.length > 0) {
+            pkgs.forEach((pkg: ActivePackageInfo) => {
+              const sched: Record<string, string> = {};
+              const pool = pkg.category ? filterByCategory(meals, pkg.category) : meals;
+              days.forEach((d: WeeklyDay) => {
+                const existingOrder = pkg.upcomingOrders?.find((o: any) => o.orderDate === d.fullDate);
+                if (existingOrder && existingOrder.recipeId) {
+                  sched[d.fullDate] = existingOrder.recipeId;
+                } else {
+                  const covering = pool.filter((m) => mealCoversDay(m, d.fullDate));
+                  if (covering.length > 0) {
+                    sched[d.fullDate] = covering[0].id;
+                  } else if (meals.length > 0) {
+                    sched[d.fullDate] = meals[0].id;
+                  }
+                }
+              });
+              schedulesMap[pkg.id] = sched;
+            });
+          } else {
+            const defaultSched: Record<string, string> = {};
+            days.forEach((d: WeeklyDay) => {
+              const covering = meals.filter((m) => mealCoversDay(m, d.fullDate));
+              if (covering.length > 0) {
+                defaultSched[d.fullDate] = covering[0].id;
+              } else if (meals.length > 0) {
+                defaultSched[d.fullDate] = meals[0].id;
+              }
+            });
+            schedulesMap['default'] = defaultSched;
+          }
+          setWeeklySchedules(schedulesMap);
           setViewState('DEFAULT');
         } else {
           setWeeklyDays(fallbackDays);
           setSelectedDayIndex(defaultSelectedIndex(fallbackDays));
           setMenuOptions([]);
-          setWeeklySchedule({});
-          setLockedCategory(locked);
-          setSelectedCategory(locked || 'ALL');
+          setWeeklySchedules({});
+          setLockedCategory(firstLock);
+          setSelectedCategory(firstLock || 'ALL');
           setViewState('EMPTY');
         }
       })
@@ -211,7 +311,7 @@ export default function MenuSwapper() {
           setWeeklyDays(fallbackDays);
           setSelectedDayIndex(defaultSelectedIndex(fallbackDays));
           setMenuOptions([]);
-          setWeeklySchedule({});
+          setWeeklySchedules({});
           setViewState('ERROR');
         }
       })
@@ -233,7 +333,26 @@ export default function MenuSwapper() {
     return () => clearInterval(id);
   }, []);
 
-  const getMealShortName = (mealId: string): string => {
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const boxParam = params.get('box');
+      if (boxParam) {
+        const boxIdx = parseInt(boxParam, 10) - 1;
+        if (boxIdx >= 0 && boxIdx < activePackages.length) {
+          setSelectedPackageIndex(boxIdx);
+          const targetSub = activePackages[boxIdx];
+          if (targetSub?.category) {
+            setLockedCategory(targetSub.category);
+            setSelectedCategory(targetSub.category);
+          }
+        }
+      }
+    }
+  }, [activePackages]);
+
+  const getMealShortName = (mealId?: string): string => {
+    if (!mealId) return 'Pilih menu';
     const found = menuOptions.find((m) => m.id === mealId);
     if (!found) return 'Pilih menu';
     const words = found.title.split(' ');
@@ -249,19 +368,25 @@ export default function MenuSwapper() {
     return `${parseInt(parts[2], 10)} ${MONTH_SHORT[monthIdx]}`;
   };
 
+  const currentSub = activePackages[selectedPackageIndex] || activePackages[0] || null;
+  const currentSubId = currentSub?.id || 'default';
+  const currentSchedule = weeklySchedules[currentSubId] || weeklySchedules['default'] || {};
+  const currentLock = currentSub ? currentSub.category : lockedCategory;
+  const effectiveCategory = currentLock || selectedCategory;
+  const packageMeals = filterByCategory(menuOptions, effectiveCategory);
+
   const selectedDay = weeklyDays[selectedDayIndex] || weeklyDays[0] || DEFAULT_DAYS[0];
   // Sebelum mount, anggap semua hari terbuka agar cocok dengan HTML prerender.
   const lockFor = (fullDate: string): { locked: boolean; reason: string | null } =>
     nowTick == null ? { locked: false, reason: null } : getDayLock(fullDate, new Date(nowTick));
   const selectedLock = lockFor(selectedDay.fullDate);
-  const effectiveCategory = lockedCategory || selectedCategory;
-  const packageMeals = filterByCategory(menuOptions, effectiveCategory);
+
   // Zona detail dan daftar pengganti mengikuti hari tampil. Hari tanpa
   // jadwal dapur tidak boleh memakai fallback daftar seminggu.
-  const isDayScheduled = Boolean(weeklySchedule[selectedDay.fullDate]);
-  const firstScheduledIndex = weeklyDays.findIndex((d) => weeklySchedule[d.fullDate]);
+  const isDayScheduled = Boolean(currentSchedule[selectedDay.fullDate]);
+  const firstScheduledIndex = weeklyDays.findIndex((d) => currentSchedule[d.fullDate]);
   const currentMealId =
-    weeklySchedule[selectedDay.fullDate] || packageMeals[0]?.id || menuOptions[0]?.id || 'm1';
+    currentSchedule[selectedDay.fullDate] || packageMeals[0]?.id || menuOptions[0]?.id || 'm1';
   const currentActiveMeal =
     menuOptions.find((m) => m.id === currentMealId) || packageMeals[0] || menuOptions[0] || null;
 
@@ -294,59 +419,134 @@ export default function MenuSwapper() {
       }, 4500);
       return;
     }
-    setWeeklySchedule((prev) => ({
+    setWeeklySchedules((prev) => ({
       ...prev,
-      [selectedDay.fullDate]: meal.id,
+      [currentSubId]: {
+        ...(prev[currentSubId] || {}),
+        [selectedDay.fullDate]: meal.id,
+      },
     }));
     if (feedbackTimeoutRef.current) {
       clearTimeout(feedbackTimeoutRef.current);
     }
-    setSwapFeedback(`Menu untuk hari ${selectedDay.dayName} berhasil dialihkan ke: ${meal.title}.`);
+    const boxPrefix = activePackages.length > 1 ? `Boks ${selectedPackageIndex + 1} (${currentSub?.packageName}) ` : '';
+    setSwapFeedback(`Menu ${boxPrefix}untuk hari ${selectedDay.dayName} berhasil dialihkan ke: ${meal.title}.`);
     feedbackTimeoutRef.current = setTimeout(() => {
       setSwapFeedback(null);
     }, 4500);
+
+    onMealSwapped?.(selectedDay.fullDate, meal.title);
+
+    const subIdToSwap = currentSub?.id || subscriptionId;
+    if (subIdToSwap) {
+      subscriptionApi.swapMenu(subIdToSwap, selectedDay.fullDate, meal.id, meal.title).catch(() => {});
+    }
   };
 
   return (
-    <section id="menu-catalog" className="py-12 border-t border-warm-border">
-      <div className="max-w-6xl mx-auto px-4 md:px-6">
-        {/* Section Header with State Toggles */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-8">
+    <section id={id} className={`py-12 border-t border-warm-border scroll-mt-20 ${className || ''}`}>
+      <span id="menu-catalog" className="sr-only" />
+      <span id="rotasi-jadwal-mingguan" className="sr-only" />
+      <div className={`max-w-6xl mx-auto ${containerClassName || 'px-4 md:px-6'}`}>
+        {/* Section Header with Controls */}
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-6 mb-6">
           <div className="space-y-2 max-w-xl">
             <p className="eyebrow text-terracotta">Rotasi jadwal mingguan</p>
             <h2 className="font-display text-2xl md:text-3xl text-warm-black text-balance">
               Atur menu harian Anda untuk 5 hari kerja.
             </h2>
-            <p className="text-sm text-warm-muted text-pretty">
-              Pilih hari yang ingin Anda sesuaikan, lalu tentukan sajian pengganti sesuai target nutrisi Anda sebelum batas waktu pukul 20.00 WIB.
-            </p>
+            {isAuthenticated && (
+              <div className="pt-1">
+                {/* Week Switcher: Minggu ini vs Minggu depan with Motion sliding pill */}
+                <div className="flex items-center gap-1.5 p-1 bg-warm-surface border border-warm-border rounded-md text-xs font-medium w-fit" role="tablist" aria-label="Pilih minggu jadwal">
+                  {([
+                    { value: 0, label: 'Minggu ini' },
+                    { value: 1, label: 'Minggu depan' },
+                  ] as const).map((tab) => {
+                    const isCurrent = weekOffset === tab.value;
+                    return (
+                      <button
+                        key={tab.value}
+                        type="button"
+                        role="tab"
+                        aria-selected={isCurrent}
+                        onClick={() => setWeekOffset(tab.value)}
+                        className={`relative px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+                          isCurrent
+                            ? 'text-tebu-50'
+                            : 'text-warm-muted hover:text-warm-black'
+                        }`}
+                      >
+                        {isCurrent && (
+                          <motion.span
+                            layoutId="activeWeekPill"
+                            className="absolute inset-0 bg-forest rounded"
+                            transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                          />
+                        )}
+                        <span className="relative z-10">{tab.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
 
-          {isAuthenticated ? (
-            /* Interactive State Switcher for UX audit inspection */
-            <div className="flex items-center gap-1.5 p-1 bg-warm-surface border border-warm-border rounded-md text-xs font-medium">
-              <span className="text-[11px] text-warm-muted px-2">Status komponen:</span>
-              {(['DEFAULT', 'LOADING', 'EMPTY', 'ERROR'] as const).map((st) => (
-                <button
-                  key={st}
-                  type="button"
-                  onClick={() => setViewState(st)}
-                  className={`px-2.5 py-1 rounded transition-colors ${
-                    viewState === st
-                      ? 'bg-forest text-tebu-50'
-                      : 'text-warm-muted hover:text-warm-black'
-                  }`}
-                >
-                  {st.toLowerCase()}
-                </button>
-              ))}
-            </div>
-          ) : (
-            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-forest-subtle border border-forest-border text-forest text-xs font-semibold">
-              <Lock className="w-3.5 h-3.5" aria-hidden="true" />
-              <span>Akses khusus pelanggan</span>
-            </div>
-          )}
+          <div className="flex flex-col items-start lg:items-end gap-3 shrink-0 lg:max-w-sm">
+            <p className="text-sm text-warm-muted text-pretty lg:text-right">
+              Pilih hari yang ingin Anda sesuaikan, lalu tentukan sajian pengganti sesuai target nutrisi Anda sebelum batas waktu pukul 20.00 WIB.
+            </p>
+            {isAuthenticated && activePackages.length > 1 && (
+              /* Multi-Package / Box Switcher with Motion sliding pill */
+                <div className="flex items-center gap-1.5 p-1 bg-warm-surface border border-warm-border rounded-md text-xs font-medium overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="tablist" aria-label="Pilih boks katering">
+                  {activePackages.map((pkg, idx) => {
+                    const isSelected = selectedPackageIndex === idx;
+                    return (
+                      <button
+                        key={pkg.id || idx}
+                        type="button"
+                        role="tab"
+                        aria-selected={isSelected}
+                        onClick={() => {
+                          setSelectedPackageIndex(idx);
+                          if (pkg.category) {
+                            setLockedCategory(pkg.category);
+                            setSelectedCategory(pkg.category);
+                          }
+                        }}
+                        className={`relative px-3 py-1.5 rounded transition-colors flex items-center gap-2 shrink-0 ${
+                          isSelected
+                            ? 'text-tebu-50'
+                            : 'text-warm-muted hover:text-warm-black'
+                        }`}
+                      >
+                        {isSelected && (
+                          <motion.span
+                            layoutId="activeBoxPill"
+                            className="absolute inset-0 bg-forest rounded shadow-xs"
+                            transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                          />
+                        )}
+                        <span className="relative z-10 inline-flex items-center gap-1.5 font-semibold">
+                          <Box className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                          <span>{idx + 1}</span>
+                        </span>
+                        {(pkg.packageName || pkg.category) && (
+                          <span className={`relative z-10 truncate whitespace-nowrap overflow-hidden text-[11px] font-normal transition-all duration-300 border-l ${
+                            isSelected
+                              ? 'max-w-[140px] sm:max-w-[200px] opacity-100 pl-1.5 text-tebu-200/90 border-tebu-50/25'
+                              : 'max-w-0 opacity-0 pl-0 text-warm-stone border-transparent'
+                          }`}>
+                            {pkg.packageName || pkg.category}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+          </div>
         </div>
 
         {/* Content Container (Blurred when unauthenticated) */}
@@ -360,34 +560,11 @@ export default function MenuSwapper() {
             aria-hidden={!isAuthenticated}
           >
 
-        {/* Week Switcher: Minggu ini vs Minggu depan */}
-        <div className="flex items-center gap-1.5 p-1 bg-warm-surface border border-warm-border rounded-md text-xs font-medium w-fit mb-3" role="tablist" aria-label="Pilih minggu jadwal">
-          {([
-            { value: 0, label: 'Minggu ini' },
-            { value: 1, label: 'Minggu depan' },
-          ] as const).map((tab) => (
-            <button
-              key={tab.value}
-              type="button"
-              role="tab"
-              aria-selected={weekOffset === tab.value}
-              onClick={() => setWeekOffset(tab.value)}
-              className={`px-3 py-1.5 rounded transition-colors ${
-                weekOffset === tab.value
-                  ? 'bg-forest text-tebu-50'
-                  : 'text-warm-muted hover:text-warm-black'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-
         {/* 5-Day Weekly Selector Bar with Assigned Meal Badges */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 mb-6">
           {weeklyDays.map((d, idx) => {
             const isDaySelected = selectedDayIndex === idx;
-            const dayMealId = weeklySchedule[d.fullDate] || 'm1';
+            const dayMealId = currentSchedule[d.fullDate] || 'm1';
             const shortName = getMealShortName(dayMealId);
             const dayLock = lockFor(d.fullDate);
 
@@ -397,8 +574,10 @@ export default function MenuSwapper() {
                 type="button"
                 onClick={() => setSelectedDayIndex(idx)}
                 title={dayLock.locked ? `Hari ${d.dayName} telah terkunci (batas 20.00 WIB)` : undefined}
-                aria-label={`${d.dayName}, ${d.dateNum} - ${shortName}${dayLock.locked ? ' (Terkunci)' : ''}`}
-                className={`relative overflow-hidden p-3 rounded-lg border text-left transition-all ${
+                aria-label={`${d.dayName}, ${d.dateNum}${dayLock.locked ? ' (Terkunci)' : ''}`}
+                className={`relative overflow-hidden p-2.5 sm:p-3 rounded-lg border text-left transition-colors duration-200 h-full min-h-[78px] flex flex-col justify-between ${
+                  idx === 4 ? 'col-span-2 sm:col-span-1' : ''
+                } ${
                   isDaySelected
                     ? 'bg-forest text-tebu-50 border-forest shadow-natural'
                     : 'bg-warm-surface text-warm-black border-warm-border hover:bg-tebu-100/70 hover:border-warm-neutral'
@@ -424,25 +603,68 @@ export default function MenuSwapper() {
                   </div>
                 )}
 
-                <div className="relative z-10">
-                  <div className="flex items-center justify-between text-[11px] mb-1">
-                    <span className={`font-semibold ${isDaySelected ? 'text-tebu-200' : 'text-warm-muted'}`}>
+                <div className="relative z-10 flex flex-col justify-between h-full w-full min-w-0">
+                  <div className="flex flex-wrap items-center justify-between gap-1 text-[11px] mb-1.5 min-w-0">
+                    <span className={`font-semibold shrink-0 ${isDaySelected ? 'text-tebu-200' : 'text-warm-muted'}`}>
                       {d.dayName}
                     </span>
-                    {d.isToday ? (
-                      <span className={`text-[9px] px-1.5 py-0.5 rounded font-semibold ${isDaySelected ? 'bg-forest-active text-tebu-50' : 'bg-tebu-200 text-warm-black'}`}>
-                        Besok
-                      </span>
-                    ) : (
+                    <div className="flex items-center gap-1 shrink-0 ml-auto">
+                      {d.isToday ? (
+                        <span
+                          className={`text-[9px] px-1.5 py-0.5 rounded font-semibold leading-none border transition-colors ${
+                            isDaySelected
+                              ? 'bg-forest-active text-tebu-50 border-forest-border/40'
+                              : 'bg-tebu-200 text-warm-black border-transparent'
+                          }`}
+                        >
+                          Hari ini
+                        </span>
+                      ) : d.isTomorrow ? (
+                        <span
+                          className={`text-[9px] px-1.5 py-0.5 rounded font-semibold leading-none border transition-colors ${
+                            isDaySelected
+                              ? 'bg-forest-active text-tebu-50 border-forest-border/40'
+                              : 'border-forest text-forest bg-transparent'
+                          }`}
+                        >
+                          Besok
+                        </span>
+                      ) : null}
                       <span className={`text-[10px] ${isDaySelected ? 'text-tebu-300' : 'text-warm-stone'}`}>
                         {d.dateNum}
                       </span>
-                    )}
+                    </div>
                   </div>
 
-                  <div className="font-semibold text-xs truncate">
-                    {shortName}
-                  </div>
+                  {activePackages.length > 1 ? (
+                    <div className="grid grid-rows-2 grid-flow-col auto-cols-max gap-x-2 gap-y-1 mt-auto w-fit">
+                      {activePackages.map((pkg, pIdx) => {
+                        const isThisPkg = selectedPackageIndex === pIdx;
+                        return (
+                          <span
+                            key={pkg.id || pIdx}
+                            className={`inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-bold rounded leading-none transition-colors ${
+                              isThisPkg
+                                ? isDaySelected
+                                ? 'bg-tebu-50 text-forest'
+                                : 'bg-forest text-tebu-50'
+                              : isDaySelected
+                                ? 'bg-forest-active text-tebu-200 border border-forest-border/40'
+                                : 'bg-tebu-200 text-warm-black border border-warm-border/60'
+                            }`}
+                            title={`Boks ${pIdx + 1}: ${pkg.packageName || ''}`}
+                          >
+                            <Box className="w-2.5 h-2.5 shrink-0" aria-hidden="true" />
+                            <span>{pIdx + 1}</span>
+                          </span>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="font-semibold text-xs truncate mt-auto w-full min-w-0" title={shortName}>
+                      {shortName}
+                    </div>
+                  )}
                 </div>
               </button>
             );
@@ -556,103 +778,126 @@ export default function MenuSwapper() {
 
         {/* State 4: DEFAULT UNCLUTTERED BENTO PLANNER */}
         {effectiveView === 'DEFAULT' && isDayScheduled && currentActiveMeal && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-            {/* Zone 1 (Col-span-5): Active Scheduled Meal for Selected Day */}
-            <div className="lg:col-span-5 bg-warm-surface border border-warm-border rounded-[16px] p-5 md:p-6 shadow-natural flex flex-col justify-between h-full">
-              <div>
-                {/* Active Meal Header */}
-                <div className="flex items-center justify-between gap-2 pb-3 border-b border-warm-border/80">
-                  <div className="flex items-center gap-2">
-                    <span className="px-2 py-0.5 rounded bg-forest text-tebu-50 text-[10px] font-semibold tracking-wide">
-                      Jadwal aktif
+          <>
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+              {/* Zone 1 (Col-span-5): Active Scheduled Meal for Selected Day */}
+              <div className="lg:col-span-5 bg-warm-surface border border-warm-border rounded-[16px] p-5 md:p-6 shadow-natural flex flex-col justify-between h-full overflow-hidden">
+                {/* Active Meal Header: Stabil saat navigasi hari */}
+                <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-warm-border/80 shrink-0">
+                  <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 min-w-0">
+                    <span className="px-2 py-0.5 rounded bg-forest text-tebu-50 text-[10px] font-semibold tracking-wide shrink-0 inline-flex items-center gap-1">
+                      {activePackages.length > 1 ? (
+                        <>
+                          <Box className="w-3 h-3 shrink-0" aria-hidden="true" />
+                          <span>{selectedPackageIndex + 1}</span>
+                        </>
+                      ) : (
+                        'Jadwal aktif'
+                      )}
                     </span>
                     <span className="text-xs font-semibold text-warm-black">
                       {selectedDay.dayName}, {selectedDay.dateNum}
                     </span>
                   </div>
-                  <div className="flex items-center gap-1 text-[11px] text-warm-muted font-mono">
-                    <Clock className="w-3 h-3 text-warm-stone" />
+                  <div className="flex items-center gap-1 text-[11px] text-warm-muted font-mono shrink-0">
+                    <Clock className="w-3 h-3 text-warm-stone shrink-0" />
                     <span>Batas 20.00 WIB</span>
                   </div>
                 </div>
 
-                {/* Food Image Feature Box */}
-                <div className="relative aspect-[16/10] w-full overflow-hidden rounded-[10px] border border-warm-border/60 bg-tebu-200 mt-4">
-                  <img
-                    src={currentActiveMeal.imageUrl}
-                    alt={currentActiveMeal.title}
-                    className="h-full w-full object-cover"
-                    loading="lazy"
-                  />
-                  <div className="absolute top-2.5 right-2.5 rounded bg-warm-black/85 backdrop-blur-sm px-2.5 py-1 font-mono text-[11px] font-semibold text-tebu-50">
-                    {currentActiveMeal.calories} kkal
-                  </div>
-                  <div className="absolute bottom-2.5 left-2.5 rounded bg-forest/90 backdrop-blur-sm px-2.5 py-0.5 text-[10px] font-medium text-tebu-50">
-                    {currentActiveMeal.category}
-                  </div>
-                </div>
+                {/* Animated Meal Content: Hanya bertransisi jika menu makanan berbeda */}
+                <div className="flex-1 flex flex-col justify-between min-h-0">
+                  <AnimatePresence initial={false} mode="wait">
+                    <motion.div
+                      key={currentActiveMeal.id}
+                      initial={{ opacity: 0.2 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0.2 }}
+                      transition={{ duration: 0.15, ease: 'easeInOut' }}
+                      className="flex flex-col flex-1"
+                    >
+                      {/* Food Image Feature Box */}
+                      <div className="relative aspect-[16/10] w-full overflow-hidden rounded-[10px] border border-warm-border/60 bg-tebu-200 mt-4">
+                        <img
+                          src={currentActiveMeal.imageUrl}
+                          alt={currentActiveMeal.title}
+                          className="h-full w-full object-cover"
+                        />
+                        <div className="absolute top-2.5 right-2.5 rounded bg-warm-black/85 backdrop-blur-sm px-2.5 py-1 font-mono text-[11px] font-semibold text-tebu-50">
+                          {currentActiveMeal.calories} kkal
+                        </div>
+                        <div className="absolute bottom-2.5 left-2.5 rounded bg-forest/90 backdrop-blur-sm px-2.5 py-0.5 text-[10px] font-medium text-tebu-50">
+                          {currentActiveMeal.category}
+                        </div>
+                      </div>
 
-                {/* SKU & Identification */}
-                <div className="flex items-center justify-between text-xs pt-3">
-                  <span className="font-mono text-[11px] text-warm-stone font-medium">{currentActiveMeal.sku}</span>
-                  <span className="text-[11px] text-warm-muted">Takar gramatur presisi</span>
-                </div>
+                      {/* SKU & Identification */}
+                      <div className="flex items-center justify-between text-xs pt-3 min-w-0 gap-2">
+                        <span className="font-mono text-[11px] text-warm-stone font-medium shrink-0">{currentActiveMeal.sku}</span>
+                        <span className="text-[11px] text-warm-muted truncate text-right">
+                          {currentSub?.packageName ? currentSub.packageName : 'Takar gramatur presisi'}
+                        </span>
+                      </div>
 
-                {/* Meal Title */}
-                <h3 className="font-display font-semibold text-base sm:text-lg text-warm-black mt-1.5 leading-snug">
-                  {currentActiveMeal.title}
-                </h3>
+                      {/* Meal Title */}
+                      <h3 className="font-display font-semibold text-base sm:text-lg text-warm-black mt-1.5 leading-snug break-words">
+                        {currentActiveMeal.title}
+                      </h3>
 
-                {/* Cooking Technique & Farm Source */}
-                <p className="text-xs text-warm-muted mt-2 leading-relaxed">
-                  {currentActiveMeal.cookingMethod}. {currentActiveMeal.farmerPartner}.
-                </p>
+                      {/* Cooking Technique & Farm Source */}
+                      <p className="text-xs text-warm-muted mt-2 leading-relaxed">
+                        {currentActiveMeal.cookingMethod}. {currentActiveMeal.farmerPartner}.
+                      </p>
 
-                {/* Nutrition Grid */}
-                <div className="grid grid-cols-4 gap-2 pt-3 mt-3 border-t border-warm-border text-center text-xs">
-                  <div className="p-2 bg-tebu-50 rounded border border-warm-border/80">
-                    <span className="text-[10px] text-warm-stone block">Kalori</span>
-                    <strong className="text-warm-black">{currentActiveMeal.calories} kkal</strong>
-                  </div>
-                  <div className="p-2 bg-tebu-50 rounded border border-warm-border/80">
-                    <span className="text-[10px] text-warm-stone block">Protein</span>
-                    <strong className="text-warm-black">{currentActiveMeal.proteinG}g</strong>
-                  </div>
-                  <div className="p-2 bg-tebu-50 rounded border border-warm-border/80">
-                    <span className="text-[10px] text-warm-stone block">Karbo</span>
-                    <strong className="text-warm-black">{currentActiveMeal.carbG}g</strong>
-                  </div>
-                  <div className="p-2 bg-tebu-50 rounded border border-warm-border/80">
-                    <span className="text-[10px] text-warm-stone block">Lemak</span>
-                    <strong className="text-warm-black">{currentActiveMeal.fatG}g</strong>
+                      {/* Nutrition Grid */}
+                      <div className="grid grid-cols-4 gap-1.5 sm:gap-2 pt-3 mt-3 border-t border-warm-border text-center text-xs">
+                        <div className="p-1.5 sm:p-2 bg-tebu-50 rounded border border-warm-border/80 min-w-0">
+                          <span className="text-[9.5px] sm:text-[10px] text-warm-stone block truncate">Kalori</span>
+                          <strong className="text-warm-black text-[11px] sm:text-xs block truncate">{currentActiveMeal.calories} kkal</strong>
+                        </div>
+                        <div className="p-1.5 sm:p-2 bg-tebu-50 rounded border border-warm-border/80 min-w-0">
+                          <span className="text-[9.5px] sm:text-[10px] text-warm-stone block truncate">Protein</span>
+                          <strong className="text-warm-black text-[11px] sm:text-xs block truncate">{currentActiveMeal.proteinG}g</strong>
+                        </div>
+                        <div className="p-1.5 sm:p-2 bg-tebu-50 rounded border border-warm-border/80 min-w-0">
+                          <span className="text-[9.5px] sm:text-[10px] text-warm-stone block truncate">Karbo</span>
+                          <strong className="text-warm-black text-[11px] sm:text-xs block truncate">{currentActiveMeal.carbG}g</strong>
+                        </div>
+                        <div className="p-1.5 sm:p-2 bg-tebu-50 rounded border border-warm-border/80 min-w-0">
+                          <span className="text-[9.5px] sm:text-[10px] text-warm-stone block truncate">Lemak</span>
+                          <strong className="text-warm-black text-[11px] sm:text-xs block truncate">{currentActiveMeal.fatG}g</strong>
+                        </div>
+                      </div>
+                    </motion.div>
+                  </AnimatePresence>
+
+                  {/* Status Indicator */}
+                  <div className="mt-auto pt-4 shrink-0">
+                    {selectedLock.locked ? (
+                      <div className="flex items-center gap-2 text-xs font-medium text-warm-black">
+                        <Lock className="w-4 h-4 text-terracotta shrink-0" aria-hidden="true" />
+                        <span>Terkunci. {selectedLock.reason}</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 text-xs font-medium text-forest">
+                        <Check className="w-4 h-4 text-forest shrink-0" />
+                        <span>Sajian aktif siap dikirim untuk hari {selectedDay.dayName}.</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
 
-              {/* Status Indicator Banner */}
-              <div className="mt-auto pt-5">
-                {selectedLock.locked ? (
-                  <div className="p-3 rounded-md bg-terracotta/10 border border-terracotta/40 text-warm-black text-xs font-medium flex items-center gap-2">
-                    <Lock className="w-4 h-4 text-terracotta shrink-0" aria-hidden="true" />
-                    <span>Terkunci. {selectedLock.reason}</span>
-                  </div>
-                ) : (
-                  <div className="p-3 rounded-md bg-forest-subtle border border-forest-border text-forest text-xs font-medium flex items-center gap-2">
-                    <Check className="w-4 h-4 text-forest shrink-0" />
-                    <span>Sajian aktif siap dikirim untuk hari {selectedDay.dayName}.</span>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Zone 2 (Col-span-7): Easy Alternative Menu Picker */}
+              {/* Zone 2 (Col-span-7): Easy Alternative Menu Picker */}
             <div className="lg:col-span-7 bg-warm-surface border border-warm-border rounded-[16px] p-5 md:p-6 shadow-natural flex flex-col justify-between h-full">
               <div className="flex flex-col flex-1 min-h-0">
                 {/* Header with Title & Summary */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 pb-3 border-b border-warm-border/80 shrink-0">
                   <div>
                     <h3 className="font-display font-semibold text-base text-warm-black">
-                      Pilihan menu pengganti
+                      {activePackages.length > 1
+                        ? `Pilihan menu pengganti (Boks ${selectedPackageIndex + 1} • ${currentSub?.packageName})`
+                        : 'Pilihan menu pengganti'}
                     </h3>
                     <p className="text-xs text-warm-muted">
                       Sesuaikan sajian untuk hari {selectedDay.dayName} dengan memilih opsi di bawah:
@@ -664,13 +909,13 @@ export default function MenuSwapper() {
                 </div>
 
                 {/* Diet Program Category Filter Tabs */}
-                {lockedCategory ? (
+                {currentLock ? (
                   <div className="flex items-center gap-2 py-3 shrink-0">
                     <span className="shrink-0 px-3 py-1 rounded-full text-xs font-semibold bg-warm-black text-tebu-50">
-                      {lockedCategory}
+                      {currentLock}
                     </span>
                     <span className="text-[11px] text-warm-muted">
-                      Menu disesuaikan paket {lockedCategory} Anda.
+                      Menu disesuaikan paket {currentLock} Anda.
                     </span>
                   </div>
                 ) : (
@@ -682,13 +927,20 @@ export default function MenuSwapper() {
                         key={cat.id}
                         type="button"
                         onClick={() => setSelectedCategory(cat.id)}
-                        className={`shrink-0 px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                        className={`relative shrink-0 px-3 py-1 rounded-full text-xs font-medium transition-colors ${
                           isActive
-                            ? 'bg-warm-black text-tebu-50'
+                            ? 'text-tebu-50'
                             : 'bg-tebu-50 text-warm-muted hover:text-warm-black border border-warm-border'
                         }`}
                       >
-                        {cat.label}
+                        {isActive && (
+                          <motion.span
+                            layoutId="activeCategoryPill"
+                            className="absolute inset-0 bg-warm-black rounded-full"
+                            transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                          />
+                        )}
+                        <span className="relative z-10">{cat.label}</span>
                       </button>
                     );
                   })}
@@ -697,13 +949,19 @@ export default function MenuSwapper() {
 
                 {/* Compact Menu Cards List */}
                 <div className="space-y-2.5 flex-1 min-h-0 overflow-y-auto pr-2 custom-pill-scrollbar max-h-[460px]">
+                  <AnimatePresence mode="popLayout">
                   {filteredMeals.map((meal) => {
                     const isCurrent = meal.id === currentMealId;
 
                     return (
-                      <div
+                      <motion.div
                         key={meal.id}
-                        className={`p-3 rounded-[12px] border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                        layout
+                        initial={{ opacity: 0, scale: 0.98 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.98 }}
+                        transition={{ duration: 0.18 }}
+                        className={`p-3 rounded-[12px] border transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
                           isCurrent
                             ? 'bg-tebu-50 border-forest'
                             : meal.isAvailable
@@ -734,11 +992,11 @@ export default function MenuSwapper() {
                               )}
                             </div>
 
-                            <h4 className="text-xs sm:text-sm font-semibold text-warm-black leading-snug line-clamp-1">
+                            <h4 className="text-xs sm:text-sm font-semibold text-warm-black leading-snug line-clamp-1 break-words">
                               {meal.title}
                             </h4>
 
-                            <div className="flex items-center gap-2 text-[11px] text-warm-muted">
+                            <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10.5px] sm:text-[11px] text-warm-muted min-w-0">
                               <span className="font-semibold text-warm-black">{meal.calories} kkal</span>
                               <span>•</span>
                               <span>P: {meal.proteinG}g</span>
@@ -751,15 +1009,15 @@ export default function MenuSwapper() {
                         </div>
 
                         {/* Right: Outcome-Based Action Button */}
-                        <div className="shrink-0 flex items-center justify-end sm:pl-2">
+                        <div className="shrink-0 flex items-center justify-end sm:pl-2 w-full sm:w-auto">
                           {isCurrent ? (
-                            <div className="px-3 py-1.5 rounded-md bg-forest text-tebu-50 text-xs font-semibold flex items-center gap-1.5">
+                            <div className="w-full sm:w-auto px-3.5 py-2 rounded-md bg-forest text-tebu-50 text-xs font-semibold flex items-center justify-center gap-1.5 min-h-[38px]">
                               <Check className="w-3.5 h-3.5 text-tebu-50" />
                               <span>Terpilih</span>
                             </div>
                           ) : meal.isAvailable ? (
                             selectedLock.locked ? (
-                              <span className="px-3 py-1.5 rounded-md bg-tebu-200 text-warm-muted text-xs font-semibold inline-flex items-center gap-1.5 cursor-not-allowed">
+                              <span className="w-full sm:w-auto px-3.5 py-2 rounded-md bg-tebu-200 text-warm-muted text-xs font-semibold inline-flex items-center justify-center gap-1.5 cursor-not-allowed min-h-[38px]">
                                 <Lock className="w-3.5 h-3.5" aria-hidden="true" />
                                 <span>Terkunci</span>
                               </span>
@@ -767,20 +1025,21 @@ export default function MenuSwapper() {
                               <button
                                 type="button"
                                 onClick={() => handleSwap(meal)}
-                                className="px-3 py-1.5 rounded-md bg-warm-black hover:bg-forest text-tebu-50 text-xs font-semibold transition-colors"
+                                className="w-full sm:w-auto px-4 py-2 rounded-md bg-warm-black hover:bg-forest text-tebu-50 text-xs font-semibold transition-colors flex items-center justify-center min-h-[38px]"
                               >
                                 Pilih menu ini
                               </button>
                             )
                           ) : (
-                            <span className="px-3 py-1.5 rounded-md bg-tebu-200 text-warm-muted text-xs font-medium cursor-not-allowed">
+                            <span className="w-full sm:w-auto px-3.5 py-2 rounded-md bg-tebu-200 text-warm-muted text-xs font-medium cursor-not-allowed flex items-center justify-center min-h-[38px]">
                               Stok habis
                             </span>
                           )}
                         </div>
-                      </div>
+                      </motion.div>
                     );
                   })}
+                  </AnimatePresence>
                 </div>
               </div>
 
@@ -793,7 +1052,8 @@ export default function MenuSwapper() {
               </div>
             </div>
           </div>
-        )}
+        </>
+      )}
 
         {/* Hari tampil tanpa jadwal dapur. Kartu hari menulis Pilih menu dan daftar pengganti ikut kosong. */}
         {effectiveView === 'DEFAULT' && !isDayScheduled && (
@@ -860,34 +1120,40 @@ export default function MenuSwapper() {
             </div>
           )}
         </div>
-        {/* Floating Confirmation Toast (Non-shifting floating pop up with animation) */}
-        {swapFeedback && (
-          <aside
-            role="status"
-            aria-live="polite"
-            className="fixed bottom-20 md:bottom-8 right-4 sm:right-6 md:right-8 z-50 max-w-sm sm:max-w-md w-[calc(100%-2rem)] sm:w-auto animate-toast pointer-events-auto"
-          >
-            <div className="bg-tebu-50/95 backdrop-blur-md border border-forest/30 rounded-xl p-3.5 sm:p-4 shadow-natural-lg flex items-start gap-3 text-xs">
-              <div className="w-6 h-6 rounded-full bg-forest text-tebu-50 flex items-center justify-center shrink-0 mt-0.5">
-                <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+        {/* Floating Confirmation Toast with Framer Motion spring animation */}
+        <AnimatePresence>
+          {swapFeedback && (
+            <motion.aside
+              role="status"
+              aria-live="polite"
+              initial={{ opacity: 0, y: 16, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 16, scale: 0.95 }}
+              transition={{ type: 'spring', stiffness: 420, damping: 28 }}
+              className="fixed bottom-20 md:bottom-8 right-4 sm:right-6 md:right-8 z-50 max-w-sm sm:max-w-md w-[calc(100%-2rem)] sm:w-auto pointer-events-auto"
+            >
+              <div className="bg-tebu-50/95 backdrop-blur-md border border-forest/30 rounded-xl p-3.5 sm:p-4 shadow-natural-lg flex items-start gap-3 text-xs">
+                <div className="w-6 h-6 rounded-full bg-forest text-tebu-50 flex items-center justify-center shrink-0 mt-0.5">
+                  <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+                </div>
+                <div className="flex-1 min-w-0 pr-1">
+                  <p className="font-semibold text-warm-black mb-0.5">Menu berhasil dialihkan</p>
+                  <p className="text-warm-muted leading-relaxed text-pretty text-[11px] sm:text-xs">
+                    {swapFeedback}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSwapFeedback(null)}
+                  aria-label="Tutup konfirmasi"
+                  className="text-warm-stone hover:text-warm-black p-1 -mr-1 -mt-1 rounded transition-colors shrink-0"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
-              <div className="flex-1 min-w-0 pr-1">
-                <p className="font-semibold text-warm-black mb-0.5">Menu berhasil dialihkan</p>
-                <p className="text-warm-muted leading-relaxed text-pretty text-[11px] sm:text-xs">
-                  {swapFeedback}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setSwapFeedback(null)}
-                aria-label="Tutup konfirmasi"
-                className="text-warm-stone hover:text-warm-black p-1 -mr-1 -mt-1 rounded transition-colors shrink-0"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-          </aside>
-        )}
+            </motion.aside>
+          )}
+        </AnimatePresence>
       </div>
     </section>
   );

@@ -20,8 +20,8 @@ COLOR_DARK_PANEL = RGBColor(36, 28, 24)      # #241C18 (Dark surface)
 FONT_DISPLAY = "Fraunces"
 FONT_BODY = "Manrope"
 
-ASSETS_DIR = r"D:\Projects\Nutridaily\presentation_assets"
-OUTPUT_PPTX = r"D:\Projects\Nutridaily\NutriDaily_Frontend_Presentation.pptx"
+ASSETS_DIR = r"E:\Projects\Nutridaily\presentation_assets"
+OUTPUT_PPTX = r"E:\Projects\Nutridaily\NutriDaily_Frontend_Presentation.pptx"
 
 def create_deck():
     prs = Presentation()
@@ -205,7 +205,7 @@ def create_deck():
 
     h_bullets = [
         ("Headline Berbobot & Bernas", "Judul tegas: 'Makanan sehat berstandar restoran. Diukur presisi per gram gizi.' dengan penataan teks berimbang (text-wrap: balance)."),
-        ("Tombol Aksi Berbasis Hasil", "CTA spesifik yang berorientasi hasil nyata: 'Hitung kebutuhan kalori TDEE' dan 'Lihat rotasi 60 menu' menggantikan kata generik."),
+        ("Tombol Aksi Berbasis Hasil", "CTA spesifik yang berorientasi hasil nyata: 'Hitung kebutuhan kalori TDEE' dan 'Lihat rotasi 30 menu' menggantikan kata generik. Fase validasi memakai 30 resep aktif."),
         ("Angka Riil Spesifik (Lumpy Numbers)", "Menampilkan metrik nyata: 1.842 pax pelanggan mingguan, toleransi timbangan ± 4.2 gram, dan kepuasan pelanggan 4.9 / 5.0."),
         ("Galeri Makanan Nir-Ilustrasi", "Foto asli boks katering berbahan ramah lingkungan yang dimasak sous-vide dan dipanggang segar tanpa ilustrasi vektor palsu.")
     ]
@@ -269,14 +269,14 @@ def create_deck():
     # ==========================================
     s6 = prs.slides.add_slide(blank_layout)
     set_bg(s6, COLOR_BG_LIGHT)
-    add_header(s6, "06", "Katalog Sajian", "Katalog 60 resep rotasi & proteksi data pelanggan", "Eksplorasi variasi menu bergizi seimbang tanpa menanam data dummy di kode antarmuka.")
+    add_header(s6, "06", "Katalog Sajian", "Katalog 30 resep aktif fase validasi dan proteksi data", "Eksplorasi variasi menu bergizi seimbang tanpa menanam data dummy di kode antarmuka.")
 
     menu_box = s6.shapes.add_textbox(Inches(0.8), Inches(1.9), Inches(5.5), Inches(5.0))
     tf6 = menu_box.text_frame
     tf6.word_wrap = True
 
     m_points = [
-        ("Rotasi 60 Resep Terverifikasi", "Menu bervariasi dari Salmon Sous-Vide, Wagyu Chimichurri, hingga Ayam Betutu Bali, mencegah kebosanan rasa pada program langganan jangka panjang."),
+        ("Rotasi 30 resep aktif fase validasi", "30 resep aktif untuk validasi rasa dan operasi. 10 di antaranya menu Lampiran 1 UTS. Variasi mencegah bosan pada langganan jangka panjang."),
         ("Jadwal Tayang Berbasis Hari Riil", "Ketersediaan menu diatur berdasarkan daftar tanggal spesifik (availableDays) yang sinkron langsung dengan inventaris dapur sentral."),
         ("Proteksi Akses Tanpa Bocor Data", "Sesuai aturan arsitektur data, antarmuka penukaran menu dilindungi modal login resmi tanpa menampilkan data palsu saat pengguna belum terautentikasi.")
     ]
@@ -389,7 +389,7 @@ def create_deck():
         ("Struktur Paket Transparan", "Pilihan durasi: 5 hari (mingguan), 20 hari kerja (diskon 10%), dan 30 hari kerja (diskon 15%) dengan perhitungan rincian otomatis."),
         ("Metode Pembayaran Lengkap", "Mendukung QRIS instan (BCA, GoPay, OVO, ShopeePay), Virtual Account otomatis, dan autodebet berkala terenkripsi PCI-DSS."),
         ("Persetujuan Medis UU PDP Eksplisit", "Formulir menyertakan kotak persetujuan pemrosesan data fisik dan riwayat kesehatan sesuai UU PDP No. 27/2022 sebelum pembayaran diproses."),
-        ("Simulasi Midtrans Sandbox", "Integrasi payment gateway yang aman dengan tokenisasi Snap mock untuk simulasi lingkungan pengembangan.")
+        ("Simulasi Midtrans Sandbox", "Checkout membuat token snap_token_mock dan url sandbox vtweb. Tanpa SDK Midtrans dan tanpa pendebetan dana nyata. Rincian ada di slide batasan demo.")
     ]
 
     for title, desc in k_points:
@@ -490,12 +490,47 @@ def create_deck():
         s11.shapes.add_picture(img_mob2_path, Inches(9.8), Inches(1.9), Inches(3.0), Inches(5.0))
 
     # ==========================================
-    # SLIDE 12: Ringkasan Arsitektur & Penutup
+    # SLIDE 12: Batasan demo dan simulasi sandbox
     # ==========================================
     s12 = prs.slides.add_slide(blank_layout)
-    set_bg(s12, COLOR_FOREST)
+    set_bg(s12, COLOR_BG_LIGHT)
+    add_header(s12, "12", "Transparansi Teknis", "Batasan demo dan simulasi sandbox yang perlu diketahui", "Seluruh integrasi payment, webhook, WhatsApp, dan kurir pada demo berjalan sebagai simulasi sandbox.")
 
-    add_header(s12, "12", "Kesimpulan & Penutup", "Fondasi teknologi frontend yang kokoh & siap produksi", "Platform antarmuka modern yang siap menghadirkan standar baru katering sehat di Indonesia.", dark=True)
+    sandbox_box = s12.shapes.add_textbox(Inches(0.8), Inches(1.9), Inches(11.7), Inches(5.0))
+    tf12 = sandbox_box.text_frame
+    tf12.word_wrap = True
+
+    sandbox_points = [
+        ("Token Midtrans mock tanpa charge asli", "Checkout membuat snap_token_mock dan url sandbox vtweb. Tanpa SDK Midtrans dan tanpa pendebetan dana nyata."),
+        ("Verifikasi webhook dilonggarkan untuk demo", "Fungsi verifyMidtransSignature selalu true. Wajib ganti ke validasi SHA-512 dengan server key sebelum rilis produksi."),
+        ("Notifikasi WhatsApp hanya log server", "Fungsi sendWhatsAppMessage hanya mencatat ke log. Tanpa pemanggilan WhatsApp Cloud API dan tanpa pesan terkirim."),
+        ("Kurir hanya enum teks tanpa integrasi API", "Kolom courierProvider menyimpan string seperti GOSEND_INSTANT atau LALAMOVE. Tanpa integrasi API Lalamove, Gojek, atau Grab dan tanpa optimasi rute."),
+        ("Worker tanpa antrean Redis aktif", "Processor BullMQ berjalan sebagai service NestJS biasa. Tanpa Queue, Worker, atau cron Redis aktif. Jadwal 05.00 WIB berjalan sebagai pemanggilan service langsung."),
+        ("Rencana tindak lanjut produksi", "Aktivasi Midtrans production key dan webhook Xendit, aktivasi WhatsApp Cloud API dengan template resmi, integrasi API kurir dengan pelacakan dan bukti foto, serta antrean BullMQ di Redis 7.")
+    ]
+
+    for title, desc in sandbox_points:
+        p1 = tf12.add_paragraph()
+        p1.text = "• " + title
+        p1.font.name = FONT_DISPLAY
+        p1.font.size = Pt(12)
+        p1.font.bold = True
+        p1.font.color.rgb = COLOR_FOREST
+        p1.space_before = Pt(4)
+        p2 = tf12.add_paragraph()
+        p2.text = "  " + desc
+        p2.font.name = FONT_BODY
+        p2.font.size = Pt(10)
+        p2.font.color.rgb = COLOR_TEXT_MUTED
+        p2.space_after = Pt(4)
+
+    # ==========================================
+    # SLIDE 13: Ringkasan Arsitektur & Penutup
+    # ==========================================
+    s13 = prs.slides.add_slide(blank_layout)
+    set_bg(s13, COLOR_FOREST)
+
+    add_header(s13, "13", "Kesimpulan & Penutup", "Fondasi teknologi frontend yang kokoh & siap produksi", "Platform antarmuka modern yang siap menghadirkan standar baru katering sehat di Indonesia.", dark=True)
 
     summary_items = [
         ("Next.js 14 App Router", "Render hibrida SSR/SSG untuk 15 rute aplikasi dengan kecepatan muat optimal dan indeksasi SEO sempurna."),
@@ -510,7 +545,7 @@ def create_deck():
         left_x = 1.0 + (col * 5.8)
         top_y = 2.0 + (row * 2.3)
 
-        scard = s12.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(left_x), Inches(top_y), Inches(5.4), Inches(2.0))
+        scard = s13.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(left_x), Inches(top_y), Inches(5.4), Inches(2.0))
         scard.fill.solid()
         scard.fill.fore_color.rgb = COLOR_FOREST_DARK
         scard.line.color.rgb = RGBColor(70, 110, 95)

@@ -202,30 +202,30 @@ export default function TdeeCalculator() {
         {/* Bento Grid Layout (Asymmetric, Not 3 equal cards) */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
           {/* Bento Cell 1: Multi-Step Input Form (Span 7 cols) */}
-          <div className="md:col-span-7 bg-warm-surface border border-warm-border rounded-[20px] p-6 grain-overlay-light flex flex-col justify-between">
-            <div className="space-y-6">
+          <div className="md:col-span-7 bg-warm-surface border border-warm-border rounded-[20px] p-4 sm:p-6 grain-overlay-light flex flex-col justify-between">
+            <div className="space-y-5 sm:space-y-6">
               {/* Stepper Header */}
-              <div className="flex items-center justify-between border-b border-warm-border pb-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-warm-border pb-3.5 sm:pb-4 gap-2.5">
                 <div className="flex items-center gap-2">
-                  <span className="w-6 h-6 rounded-full bg-forest text-tebu-50 text-xs font-semibold flex items-center justify-center">
+                  <span className="w-6 h-6 rounded-full bg-forest text-tebu-50 text-xs font-semibold flex items-center justify-center shrink-0">
                     {step}
                   </span>
                   <span className="text-xs font-semibold text-warm-black">
-                    {step === 1 ? 'Langkah 1 dari 2: Data fisik Anda' : 'Langkah 2 dari 2: Target kesehatan Anda'}
+                    {step === 1 ? 'Langkah 1: Data fisik Anda' : 'Langkah 2: Target kesehatan'}
                   </span>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-1.5 self-start sm:self-auto">
                   <button
                     type="button"
                     onClick={() => { setStep(1); simulateRecalculation(); }}
-                    className={`text-xs px-2.5 py-1 rounded transition-colors ${step === 1 ? 'bg-forest text-tebu-50 font-medium' : 'text-warm-muted hover:text-warm-black'}`}
+                    className={`text-xs px-2.5 py-1.5 rounded transition-colors min-h-[36px] flex items-center ${step === 1 ? 'bg-forest text-tebu-50 font-medium' : 'text-warm-muted hover:text-warm-black'}`}
                   >
                     1. Data fisik
                   </button>
                   <button
                     type="button"
                     onClick={() => { setStep(2); simulateRecalculation(); }}
-                    className={`text-xs px-2.5 py-1 rounded transition-colors ${step === 2 ? 'bg-forest text-tebu-50 font-medium' : 'text-warm-muted hover:text-warm-black'}`}
+                    className={`text-xs px-2.5 py-1.5 rounded transition-colors min-h-[36px] flex items-center ${step === 2 ? 'bg-forest text-tebu-50 font-medium' : 'text-warm-muted hover:text-warm-black'}`}
                   >
                     2. Target gizi
                   </button>
@@ -372,15 +372,15 @@ export default function TdeeCalculator() {
               )}
             </div>
 
-            <div className="pt-6 flex justify-between items-center border-t border-warm-border mt-6">
-              <span className="text-[11px] text-warm-muted">
+            <div className="pt-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-t border-warm-border mt-6">
+              <span className="text-[11px] text-warm-muted break-words">
                 Metode: Mifflin-St Jeor (Akurasi klinis 95%)
               </span>
               {step === 1 ? (
                 <button
                   type="button"
                   onClick={() => setStep(2)}
-                  className="px-4 py-2 bg-warm-black text-tebu-50 hover:bg-forest text-xs font-medium rounded-md transition-colors"
+                  className="px-4 py-2.5 bg-warm-black text-tebu-50 hover:bg-forest text-xs font-medium rounded-md transition-colors min-h-[44px] flex items-center justify-center shrink-0 w-full sm:w-auto"
                 >
                   Lanjut ke target gizi
                 </button>
@@ -388,7 +388,7 @@ export default function TdeeCalculator() {
                 <button
                   type="button"
                   onClick={() => setStep(1)}
-                  className="px-3 py-1.5 text-warm-muted hover:text-warm-black text-xs font-medium transition-colors"
+                  className="px-3 py-2 text-warm-muted hover:text-warm-black text-xs font-medium transition-colors min-h-[44px] flex items-center justify-center shrink-0 w-full sm:w-auto"
                 >
                   Kembali ke data fisik
                 </button>
@@ -397,8 +397,8 @@ export default function TdeeCalculator() {
           </div>
 
           {/* Bento Cell 2: Primary Results Display (Span 5 cols) */}
-          <div className="md:col-span-5 bg-forest text-tebu-50 rounded-[20px] p-6 grain-overlay-panel flex flex-col justify-between">
-            <div className="space-y-6">
+          <div className="md:col-span-5 bg-forest text-tebu-50 rounded-[20px] p-4 sm:p-6 grain-overlay-panel flex flex-col justify-between">
+            <div className="space-y-5 sm:space-y-6">
               <div>
                 <span className="eyebrow text-tebu-300">Rekomendasi paket harian</span>
                 <h3 className="font-display text-xl text-tebu-50 mt-1">
@@ -469,7 +469,7 @@ export default function TdeeCalculator() {
                     price: dailyPortionCost,
                   },
                 }}
-                className="w-full flex items-center justify-center py-3 px-4 rounded-md bg-tebu-50 text-forest hover:bg-tebu-100 font-semibold text-xs tracking-tight transition-colors"
+                className="w-full min-h-[44px] flex items-center justify-center py-3 px-4 rounded-md bg-tebu-50 text-forest hover:bg-tebu-100 font-semibold text-xs tracking-tight transition-colors shadow-natural"
               >
                 {ctaLabel}
               </Link>

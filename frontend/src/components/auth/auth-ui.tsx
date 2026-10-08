@@ -225,7 +225,7 @@ export function SubmitButton({
       type="submit"
       disabled={loading || props.disabled}
       aria-busy={loading}
-      className={`w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-md text-sm font-semibold transition-colors shadow-natural disabled:opacity-60 disabled:cursor-not-allowed ${styles}`}
+      className={`w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-md text-sm font-semibold min-h-[44px] transition-colors shadow-natural disabled:opacity-60 disabled:cursor-not-allowed ${styles}`}
       {...props}
     >
       {loading && <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />}

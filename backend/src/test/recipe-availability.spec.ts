@@ -22,32 +22,32 @@ describe('RecipesService (Availability Window Rule)', () => {
     service = new RecipesService(new InMemoryRecipesRepository());
   });
 
-  it('should REJECT activation past the 20 active meal cap', async () => {
-    for (let i = 1; i <= 20; i++) {
+  it('should REJECT activation past the 30 active meal cap', async () => {
+    for (let i = 1; i <= 30; i++) {
       await service.createStoredRecipe(baseMeal(`QR-CAP-${i}-2026`));
     }
-    await expect(service.createStoredRecipe(baseMeal('QR-CAP-21-2026'))).rejects.toThrow(
+    await expect(service.createStoredRecipe(baseMeal('QR-CAP-31-2026'))).rejects.toThrow(
       BadRequestException,
     );
   });
 
   it('should ALLOW activation again after one meal is deactivated', async () => {
     const created: Array<{ id: string }> = [];
-    for (let i = 1; i <= 20; i++) {
+    for (let i = 1; i <= 30; i++) {
       created.push(await service.createStoredRecipe(baseMeal(`QR-FREE-${i}-2026`)));
     }
     await service.updateStoredRecipe(created[0].id, { isActive: false });
-    const extra = await service.createStoredRecipe(baseMeal('QR-FREE-21-2026'));
+    const extra = await service.createStoredRecipe(baseMeal('QR-FREE-31-2026'));
     expect(extra.isActive).toBe(true);
   });
 
   it('should REJECT reactivation via PATCH when the cap is full', async () => {
     const created: Array<{ id: string }> = [];
-    for (let i = 1; i <= 20; i++) {
+    for (let i = 1; i <= 30; i++) {
       created.push(await service.createStoredRecipe(baseMeal(`QR-RE-${i}-2026`)));
     }
     await service.updateStoredRecipe(created[0].id, { isActive: false });
-    await service.createStoredRecipe(baseMeal('QR-RE-21-2026'));
+    await service.createStoredRecipe(baseMeal('QR-RE-31-2026'));
     await expect(service.updateStoredRecipe(created[0].id, { isActive: true })).rejects.toThrow(
       BadRequestException,
     );
@@ -111,7 +111,7 @@ describe('RecipesService (Availability Window Rule)', () => {
     );
     const summary = await service.getAvailabilitySummary();
     expect(summary.total).toBe(2);
-    expect(summary.cap).toBe(20);
+    expect(summary.cap).toBe(30);
     expect(summary.activeNow).toBe(1);
     expect(summary.scheduledFuture).toBe(1);
   });

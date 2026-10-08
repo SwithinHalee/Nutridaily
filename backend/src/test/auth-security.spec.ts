@@ -33,7 +33,7 @@ function setup() {
 
 async function registeredVerifiedUser(s: ReturnType<typeof setup>, email = 'sari@example.com') {
   await s.service.register(
-    registerSchema.parse({ fullName: 'Sari Wulandari', email, phone: '081234567890', password: PASSWORD, confirmPassword: PASSWORD }),
+    registerSchema.parse({ fullName: 'Sari Wulandari', email, phone: '081234567890', password: PASSWORD, confirmPassword: PASSWORD, dataConsent: true }),
     ctx,
   );
   await s.service.verifyEmail(s.mail.lastToken(), ctx);
@@ -41,7 +41,7 @@ async function registeredVerifiedUser(s: ReturnType<typeof setup>, email = 'sari
 }
 
 describe('Auth input validation (Zod)', () => {
-  const base = { fullName: 'Sari Wulandari', email: 'sari@example.com', phone: '081234567890', password: PASSWORD, confirmPassword: PASSWORD };
+  const base = { fullName: 'Sari Wulandari', email: 'sari@example.com', phone: '081234567890', password: PASSWORD, confirmPassword: PASSWORD, dataConsent: true };
 
   it('rejects passwords missing any required character class', () => {
     for (const weak of ['short1!', 'alllowercase1!', 'ALLUPPERCASE1!', 'NoDigitsHere!', 'NoSymbols123']) {
@@ -60,6 +60,12 @@ describe('Auth input validation (Zod)', () => {
     expect(parsed.fullName).toBe('Sari Wulandari');
     expect(normalizeIndonesianPhone('0812-3456-7890')).toBe('+6281234567890');
     expect(normalizeIndonesianPhone('62 812 3456 7890')).toBe('+6281234567890');
+  });
+
+  it('rejects registration without explicit data consent (UU PDP No. 27/2022)', () => {
+    expect(() => registerSchema.parse({ ...base, dataConsent: false })).toThrow(ZodError);
+    const { dataConsent: _dropped, ...withoutConsent } = base;
+    expect(() => registerSchema.parse(withoutConsent)).toThrow(ZodError);
   });
 
   it('escapes HTML in email templates', () => {
@@ -84,9 +90,23 @@ describe('AuthService security flows', () => {
     expect(stored.tokenHash).not.toContain(session.refreshToken);
   });
 
+  it('refuses registration when the consent flag is false', async () => {
+    const parsed = registerSchema.parse({
+      fullName: 'Rina Marlina',
+      email: 'rina@example.com',
+      phone: '081322223333',
+      password: PASSWORD,
+      confirmPassword: PASSWORD,
+      dataConsent: true,
+    });
+    await expect(s.service.register({ ...parsed, dataConsent: false }, ctx)).rejects.toMatchObject({
+      code: 'CONSENT_REQUIRED',
+    });
+  });
+
   it('blocks login until the email is verified', async () => {
     await s.service.register(
-      registerSchema.parse({ fullName: 'Budi Santoso', email: 'budi@example.com', phone: '081311112222', password: PASSWORD, confirmPassword: PASSWORD }),
+      registerSchema.parse({ fullName: 'Budi Santoso', email: 'budi@example.com', phone: '081311112222', password: PASSWORD, confirmPassword: PASSWORD, dataConsent: true }),
       ctx,
     );
     await expect(s.service.login({ email: 'budi@example.com', password: PASSWORD }, ctx)).rejects.toMatchObject({ code: 'EMAIL_NOT_VERIFIED' });

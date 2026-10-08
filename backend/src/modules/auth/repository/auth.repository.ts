@@ -15,6 +15,9 @@ export interface UserRecord {
   lockedUntil: Date | null;
   lastLoginAt: Date | null;
   deletedAt: Date | null;
+  // UU PDP No. 27/2022 Bab 11.2: explicit consent for body and health data processing.
+  dataConsentAt: Date | null;
+  dataConsentVersion: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -61,6 +64,8 @@ export interface CreateUserData {
   role?: UserRole;
   isVerified?: boolean;
   emailVerifiedAt?: Date | null;
+  dataConsentAt?: Date | null;
+  dataConsentVersion?: string | null;
 }
 
 export type UserPatch = Partial<
@@ -76,6 +81,8 @@ export type UserPatch = Partial<
     | 'failedLoginCount'
     | 'lockedUntil'
     | 'lastLoginAt'
+    | 'dataConsentAt'
+    | 'dataConsentVersion'
   >
 >;
 

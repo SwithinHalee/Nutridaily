@@ -127,6 +127,15 @@ export const registerSchema = z
     phone: phoneSchema,
     password: passwordSchema,
     confirmPassword: z.string({ required_error: 'Konfirmasi kata sandi wajib diisi.' }).max(128),
+    // UU PDP No. 27/2022 Bab 11.2: explicit consent for body and health data processing.
+    dataConsent: z
+      .boolean({
+        required_error: 'Persetujuan penggunaan data wajib dicentang.',
+        invalid_type_error: 'Persetujuan penggunaan data wajib dicentang.',
+      })
+      .refine((v) => v === true, {
+        message: 'Centang persetujuan penggunaan data tubuh menurut UU PDP No. 27/2022 untuk mendaftar.',
+      }),
   })
   .strict()
   .superRefine((data, ctx) => {
@@ -186,6 +195,9 @@ export const changePasswordSchema = z
   });
 
 export const DELETE_CONFIRMATION_PHRASE = 'HAPUS AKUN SAYA';
+
+/** Policy version stamped on User.dataConsentVersion at registration. */
+export const DATA_CONSENT_VERSION = 'pdp-2026-10';
 
 export const deleteAccountSchema = z
   .object({

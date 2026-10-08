@@ -88,6 +88,9 @@ model User {
   failedLoginCount  Int            @default(0)
   lockedUntil       DateTime?
   lastLoginAt       DateTime?
+  // UU PDP No. 27/2022 Bab 11.2: persetujuan eksplisit pemrosesan data tubuh dan kesehatan.
+  dataConsentAt       DateTime?
+  dataConsentVersion  String?
   // Soft delete (UU PDP No. 27/2022): PII is anonymised, row kept for invoice/tax retention.
   deletedAt         DateTime?
   createdAt         DateTime       @default(now())
@@ -103,6 +106,7 @@ model User {
   passwordResetTokens      PasswordResetToken[]
   emailVerificationTokens  EmailVerificationToken[]
   loginAuditLogs           LoginAuditLog[]
+  healthProfileHistory     HealthProfileHistory[]
 
   @@index([deletedAt])
 }
@@ -217,6 +221,38 @@ model HealthProfile {
   encryptedMedicalNotes String?    // Base64 (iv:authTag:ciphertext)
   createdAt            DateTime    @default(now())
   updatedAt            DateTime    @updatedAt
+
+  historyRecords       HealthProfileHistory[]
+}
+
+// UU PDP No. 27/2022 & Clinical Audit Trail: Riwayat Versi Profil Kesehatan (SCD Tipe 2)
+model HealthProfileHistory {
+  id                    String        @id @default(uuid())
+  healthProfileId       String
+  healthProfile         HealthProfile @relation(fields: [healthProfileId], references: [id], onDelete: Cascade)
+  userId                String
+  user                  User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  version               Int           // 1, 2, 3...
+  heightCm              Float
+  weightKg              Float
+  age                   Int
+  gender                String        // "MALE" | "FEMALE"
+  activityLevel         String
+  tdeeKcal              Float
+  targetCalories        Float
+  targetProteinGrams    Float
+  targetCarbsGrams      Float
+  targetFatGrams        Float
+  allergies             String[]
+  medicalConditions     String[]
+  encryptedMedicalNotes String?       // AES-256-GCM snapshot
+  changeReason          String?       // "INITIAL_REGISTRATION", "TDEE_RECALCULATION", "CLINICAL_UPDATE"
+  effectiveFrom         DateTime      @default(now())
+  effectiveTo           DateTime?     // Null jika saat ini aktif
+  createdAt             DateTime      @default(now())
+
+  @@index([healthProfileId, version])
+  @@index([userId, createdAt])
 }
 
 model Recipe {

@@ -20,10 +20,11 @@ import {
   Loader2,
   Utensils,
   ArrowRight,
+  Receipt,
 } from 'lucide-react';
 import { CustomDropdown } from '@/components/custom-dropdown';
 import { useAuth } from '@/lib/auth-context';
-import { subscriptionApi, recipesApi, ApiError } from '@/lib/api-client';
+import { subscriptionApi, recipesApi, paymentsApi, ApiError } from '@/lib/api-client';
 
 const InteractivePinMap = dynamic(
   () => import('@/components/interactive-pin-map').then((mod) => mod.InteractivePinMap),
@@ -60,6 +61,7 @@ interface SubscriptionData {
     fullAddress: string;
   };
   upcomingOrders: UpcomingOrder[];
+  allSubscriptions?: SubscriptionData[];
 }
 
 interface CatalogMeal {
@@ -72,6 +74,56 @@ interface CatalogMeal {
   carbG: number;
   fatG: number;
   isAvailable: boolean;
+}
+
+interface UserTransaction {
+  id: string;
+  invoiceNumber: string;
+  userId: string;
+  customerName?: string;
+  customerEmail?: string;
+  packageType: string;
+  durationDays: number;
+  amount: number;
+  formattedAmount?: string;
+  paymentType: string;
+  transactionStatus: string;
+  paidAt?: string;
+  createdAt?: string;
+}
+
+function formatPackageName(pkg: string): string {
+  const map: Record<string, string> = {
+    MAINTENANCE_VITALITY_DAILY: 'Maintenance vitality daily',
+    WEIGHT_LOSS_LEAN_SCULPT: 'Weight loss (lean & sculpt)',
+    MUSCLE_BUILD_HYPERTROPHY: 'Muscle building (hypertrophy)',
+    PRE_DIABETES_GLUCO_BALANCE: 'Pre-diabetes gluco balance',
+    HYPERTENSION_DASH_CARDIO: 'Hypertension DASH cardio',
+  };
+  return map[pkg] || pkg.replace(/_/g, ' ').toLowerCase();
+}
+
+function formatPaymentMethod(method: string): string {
+  const map: Record<string, string> = {
+    SNAP_QRIS: 'QRIS real-time (BCA, GoPay, OVO)',
+    SNAP_VA: 'Virtual Account otomatis',
+    MIDTRANS_SNAP: 'Midtrans Snap',
+  };
+  return map[method] || method.replace(/_/g, ' ');
+}
+
+function formatDateIndo(isoDate?: string): string {
+  if (!isoDate) return '-';
+  try {
+    const d = new Date(isoDate);
+    return d.toLocaleDateString('id-ID', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    });
+  } catch {
+    return isoDate.slice(0, 10);
+  }
 }
 
 // Dapur tutup Sabtu dan Minggu. Tanggal pengiriman selalu hari kerja Senin sampai Jumat.
@@ -94,16 +146,15 @@ export default function SubscriptionControlPage() {
   const [selectedTomorrowMeal, setSelectedTomorrowMeal] = useState<string>('');
   const [tomorrowDate, setTomorrowDate] = useState<string>('');
 
+  // User transactions state
+  const [userTransactions, setUserTransactions] = useState<UserTransaction[]>([]);
+  const [loadingTransactions, setLoadingTransactions] = useState<boolean>(true);
+
   // Modals & Feedback
   const [isAddressModalOpen, setIsAddressModalOpen] = useState<boolean>(false);
-  const [isSwapModalOpen, setIsSwapModalOpen] = useState<boolean>(false);
   const [isServiceRecoveryOpen, setIsServiceRecoveryOpen] = useState<boolean>(false);
   const [feedbackMessage, setFeedbackMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-
-  // Catalog meals for swap dropdown
-  const [catalogMeals, setCatalogMeals] = useState<CatalogMeal[]>([]);
-  const [selectedSwapRecipeId, setSelectedSwapRecipeId] = useState<string>('');
 
   // Form input alamat baru
   const [addressLabel, setAddressLabel] = useState('Kantor');
@@ -228,26 +279,10 @@ export default function SubscriptionControlPage() {
   // Cutoff status: modifications for tomorrow lock at 20:00:00 WIB
   const isCutoffPassed = wibHour >= 20;
 
-  // Load subscription and catalog from backend API. Tanpa data contoh.
+  // Load subscription from backend API. Tanpa data contoh.
   // Pengunjung belum masuk melihat undangan masuk di balik buram.
   useEffect(() => {
     let mounted = true;
-
-    // Fetch recipe catalog for menu swap choices
-    recipesApi
-      .getCatalog()
-      .then((res) => {
-        if (!mounted) return;
-        if (res.data?.meals) {
-          setCatalogMeals(res.data.meals);
-          if (res.data.meals.length > 0) {
-            setSelectedSwapRecipeId(res.data.meals[0].id);
-          }
-        }
-      })
-      .catch((err) => {
-        console.error('Gagal memuat katalog resep:', err);
-      });
 
     if (status !== 'authenticated') {
       setLoadingSub(false);
@@ -278,10 +313,31 @@ export default function SubscriptionControlPage() {
         if (mounted) setLoadingSub(false);
       });
 
+    setLoadingTransactions(true);
+    paymentsApi
+      .getTransactions()
+      .then((res) => {
+        if (!mounted) return;
+        const all: UserTransaction[] = res.data?.transactions || [];
+        const myTransactions = all.filter(
+          (t) =>
+            (user?.id && t.userId === user.id) ||
+            (user?.email && t.customerEmail?.toLowerCase() === user.email.toLowerCase()) ||
+            (!user?.id && !user?.email),
+        );
+        setUserTransactions(myTransactions);
+      })
+      .catch((err) => {
+        console.error('Gagal memuat riwayat transaksi:', err);
+      })
+      .finally(() => {
+        if (mounted) setLoadingTransactions(false);
+      });
+
     return () => {
       mounted = false;
     };
-  }, [status]);
+  }, [status, user]);
 
   // Handlers for subscription modifications via backend API
   const handlePauseResume = async () => {
@@ -361,38 +417,6 @@ export default function SubscriptionControlPage() {
     }
   };
 
-  const handleConfirmSwapMenu = async () => {
-    if (isCutoffPassed) {
-      setFeedbackMessage({
-        type: 'error',
-        text: 'Batas waktu 20.00 WIB telah lewat. Menu katering untuk besok telah memasuki proses preparasi dapur.',
-      });
-      setIsSwapModalOpen(false);
-      return;
-    }
-    if (!subData) return;
-
-    const chosen = catalogMeals.find((m) => m.id === selectedSwapRecipeId);
-    if (!chosen) return;
-
-    setIsSubmitting(true);
-    try {
-      const targetDate = tomorrowDate || nextDeliveryDateStr();
-      const res = await subscriptionApi.swapMenu(subData.id, targetDate, chosen.id, chosen.title);
-      setSelectedTomorrowMeal(chosen.title);
-      setIsSwapModalOpen(false);
-      setFeedbackMessage({
-        type: 'success',
-        text: res.message || `Menu untuk pengiriman besok berhasil ditukar dengan "${chosen.title}".`,
-      });
-    } catch (err) {
-      const msg = err instanceof ApiError ? err.message : 'Gagal menukar menu katering.';
-      setFeedbackMessage({ type: 'error', text: msg });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
   // 1. Loading State (Sleek placeholder)
   if (status === 'loading') {
     return (
@@ -442,13 +466,13 @@ export default function SubscriptionControlPage() {
         <div className="flex items-start gap-3">
           <Clock className={`w-5 h-5 shrink-0 mt-0.5 ${isCutoffPassed ? 'text-terracotta' : 'text-forest'}`} />
           <div className="space-y-0.5">
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <span className="font-mono text-xs font-semibold">
                 Jam sistem: {String(wibHour).padStart(2, '0')}:{String(wibMinute).padStart(2, '0')}:
                 {String(wibSecond).padStart(2, '0')} WIB
               </span>
               <span
-                className={`text-[10px] font-semibold px-2 py-0.5 rounded ${
+                className={`text-[10px] font-semibold px-2 py-0.5 rounded shrink-0 ${
                   isCutoffPassed
                     ? 'bg-terracotta text-tebu-50'
                     : 'bg-forest text-tebu-50'
@@ -503,97 +527,159 @@ export default function SubscriptionControlPage() {
         ) : (
           <>
             {/* Header Row */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-warm-border">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <h2 className="font-display font-semibold text-lg text-warm-black">
-                    Paket aktif: {subData?.packageType ? subData.packageType.replace(/_/g, ' ').toLowerCase() : 'Weight loss (lean & sculpt)'}
-                  </h2>
-                  <span
-                    className={`text-[10px] font-semibold px-2 py-0.5 rounded ${
-                      subStatus === 'ACTIVE'
-                        ? 'bg-forest-subtle text-forest border border-forest-border'
-                        : 'bg-warm-border text-warm-muted'
-                    }`}
-                  >
-                    {subStatus === 'ACTIVE' ? 'Status: Aktif' : 'Status: Dijeda (Paused)'}
-                  </span>
-                </div>
-                <p className="text-xs text-warm-muted">
-                  ID Langganan: <span className="font-mono">{subData?.id || 'sub_active'}</span> • Durasi: {subData?.durationDays || 20} hari kerja • Layanan katering Jadetabek
-                </p>
-              </div>
+            {(() => {
+              const activeSubs = (subData?.allSubscriptions || (subData ? [subData] : [])).filter((s) => s.status === 'ACTIVE');
+              const isMultiBox = activeSubs.length > 1;
 
-              <div>
-                <button
-                  type="button"
-                  disabled={isSubmitting}
-                  onClick={handlePauseResume}
-                  className={`px-4 py-2 rounded-md text-xs font-semibold transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50 ${
-                    subStatus === 'ACTIVE'
-                      ? 'bg-tebu-50 border border-warm-border text-warm-black hover:border-warm-neutral'
-                      : 'bg-forest text-tebu-50 hover:bg-forest-hover'
-                  }`}
-                >
-                  {isSubmitting ? (
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  ) : subStatus === 'ACTIVE' ? (
-                    <>
-                      <Pause className="w-3.5 h-3.5 text-warm-muted" /> Jeda langganan
-                    </>
-                  ) : (
-                    <>
-                      <Play className="w-3.5 h-3.5 text-tebu-50" /> Aktifkan kembali
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
+              return (
+                <>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-warm-border">
+                    <div className="space-y-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h2 className="font-display font-semibold text-lg text-warm-black">
+                          {isMultiBox
+                            ? `Paket aktif paralel (${activeSubs.length} boks / hari)`
+                            : `Paket aktif: ${formatPackageName(subData?.packageType || 'WEIGHT_LOSS_LEAN_SCULPT')}`}
+                        </h2>
+                        <span
+                          className={`text-[10px] font-semibold px-2 py-0.5 rounded ${
+                            subStatus === 'ACTIVE'
+                              ? 'bg-forest-subtle text-forest border border-forest-border'
+                              : 'bg-warm-border text-warm-muted'
+                          }`}
+                        >
+                          {subStatus === 'ACTIVE' ? 'Status: Aktif' : 'Status: Dijeda (Paused)'}
+                        </span>
+                        {isMultiBox && (
+                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-terracotta-subtle text-terracotta border border-terracotta-border">
+                            {activeSubs.length} boks katering harian
+                          </span>
+                        )}
+                      </div>
+                      {isMultiBox ? (
+                        <div className="flex flex-wrap gap-2 pt-1">
+                          {activeSubs.map((s, idx) => (
+                            <span key={s.id || idx} className="text-[11px] px-2 py-0.5 rounded bg-tebu-100 border border-warm-border text-warm-black">
+                              Boks {idx + 1}: {formatPackageName(s.packageType)} ({s.durationDays} hari kerja)
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-warm-muted">
+                          ID Langganan: <span className="font-mono">{subData?.id || 'sub_active'}</span> • Durasi: {subData?.durationDays || 20} hari kerja • Layanan katering Jadetabek
+                        </p>
+                      )}
+                    </div>
 
-            {/* Scheduled Meal for Tomorrow (H+1) */}
-            <div className="bg-tebu-50 border border-warm-border rounded-[14px] p-5 space-y-4">
-              <div className="flex items-center justify-between text-xs">
-                <span className="eyebrow text-forest flex items-center gap-1.5">
-                  <Calendar className="w-3.5 h-3.5" /> Jadwal pengiriman berikutnya ({tomorrowDate || 'H+1'})
-                </span>
-                <span className="font-mono text-warm-stone text-[11px]">Slot antar: 11.00 - 12.00 WIB</span>
-              </div>
+                    <div className="w-full sm:w-auto">
+                      <button
+                        type="button"
+                        disabled={isSubmitting}
+                        onClick={handlePauseResume}
+                        className={`w-full sm:w-auto justify-center min-h-[40px] px-4 py-2 rounded-md text-xs font-semibold transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50 ${
+                          subStatus === 'ACTIVE'
+                            ? 'bg-tebu-50 border border-warm-border text-warm-black hover:border-warm-neutral'
+                            : 'bg-forest text-tebu-50 hover:bg-forest-hover'
+                        }`}
+                      >
+                        {isSubmitting ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : subStatus === 'ACTIVE' ? (
+                          <>
+                            <Pause className="w-3.5 h-3.5 text-warm-muted" /> Jeda langganan
+                          </>
+                        ) : (
+                          <>
+                            <Play className="w-3.5 h-3.5 text-tebu-50" /> Aktifkan kembali
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
 
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div className="space-y-1">
-                  <h3 className="font-display font-semibold text-base text-warm-black leading-snug">
-                    {selectedTomorrowMeal || 'Memuat sajian terjadwal...'}
-                  </h3>
-                  <p className="text-xs text-warm-muted">
-                    Bahan dipetik subuh • Ditimbang presisi per gram gizi • Bebas pengawet sintetis
-                  </p>
-                </div>
+                  {/* Scheduled Meal for Tomorrow (H+1) */}
+                  <div className="bg-tebu-50 border border-warm-border rounded-[14px] p-5 space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-2 text-xs">
+                      <span className="eyebrow text-forest flex items-center gap-1.5 min-w-0 break-words">
+                        <Calendar className="w-3.5 h-3.5 shrink-0" /> Jadwal pengiriman berikutnya ({tomorrowDate || 'H+1'})
+                      </span>
+                      <span className="font-mono text-warm-stone text-[11px] shrink-0">
+                        {isMultiBox ? `Total ${activeSubs.length} boks • Slot antar: 11.00 - 12.00 WIB` : 'Slot antar: 11.00 - 12.00 WIB'}
+                      </span>
+                    </div>
 
-                <button
-                  type="button"
-                  onClick={() => setIsSwapModalOpen(true)}
-                  className="px-3.5 py-2 rounded-md bg-warm-surface border border-warm-border hover:bg-tebu-100 text-warm-black text-xs font-semibold transition-colors flex items-center gap-1.5 shrink-0 cursor-pointer"
-                >
-                  <RefreshCw className="w-3.5 h-3.5 text-forest" />
-                  <span>Tukar menu berikutnya</span>
-                </button>
-              </div>
+                    {isMultiBox ? (
+                      <div className="space-y-3">
+                        {activeSubs.map((s, idx) => {
+                          const firstOrder = s.upcomingOrders && s.upcomingOrders.length > 0 ? s.upcomingOrders[0] : null;
+                          return (
+                            <div
+                              key={s.id || idx}
+                              className="p-3.5 rounded-md bg-warm-surface border border-warm-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3"
+                            >
+                              <div className="space-y-0.5 min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-terracotta-subtle text-terracotta border border-terracotta-border">
+                                    Boks {idx + 1}
+                                  </span>
+                                  <span className="text-[11px] font-medium text-warm-stone">
+                                    Paket {formatPackageName(s.packageType)}
+                                  </span>
+                                </div>
+                                <h4 className="font-display font-semibold text-sm text-warm-black break-words">
+                                  {firstOrder?.recipeTitle || selectedTomorrowMeal || 'Memuat sajian terjadwal...'}
+                                </h4>
+                              </div>
+                              <Link
+                                href={`/?box=${idx + 1}#menu-catalog`}
+                                className="w-full sm:w-auto justify-center min-h-[38px] px-3.5 py-2 rounded-md bg-tebu-50 border border-warm-border hover:bg-tebu-100 text-warm-black text-xs font-semibold transition-colors flex items-center gap-1.5 shrink-0"
+                              >
+                                <RefreshCw className="w-3.5 h-3.5 text-forest" />
+                                <span>Tukar menu boks {idx + 1}</span>
+                              </Link>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                        <div className="space-y-1 min-w-0">
+                          <h3 className="font-display font-semibold text-base text-warm-black leading-snug break-words">
+                            {selectedTomorrowMeal || 'Memuat sajian terjadwal...'}
+                          </h3>
+                          <p className="text-xs text-warm-muted break-words">
+                            Bahan dipetik subuh • Ditimbang presisi per gram gizi • Bebas pengawet sintetis
+                          </p>
+                        </div>
 
-              {/* Delivery Address Destination */}
-              <div className="pt-3 border-t border-warm-border flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
-                <div className="flex items-center gap-1.5 text-warm-neutral">
-                  <MapPin className="w-3.5 h-3.5 text-terracotta shrink-0" />
-                  <span>Alamat antar: <strong className="text-warm-black font-medium">{currentAddress || 'Belum diatur'}</strong></span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setIsAddressModalOpen(true)}
-                  className="text-forest hover:underline font-semibold text-xs text-left cursor-pointer"
-                >
-                  Ubah alamat
-                </button>
-              </div>
-            </div>
+                        <Link
+                          href="/#menu-catalog"
+                          className="w-full sm:w-auto justify-center min-h-[40px] px-3.5 py-2 rounded-md bg-warm-surface border border-warm-border hover:bg-tebu-100 text-warm-black text-xs font-semibold transition-colors flex items-center gap-1.5 shrink-0 cursor-pointer"
+                        >
+                          <RefreshCw className="w-3.5 h-3.5 text-forest" />
+                          <span>Tukar menu berikutnya</span>
+                        </Link>
+                      </div>
+                    )}
+
+                    {/* Delivery Address Destination */}
+                    <div className="pt-3 border-t border-warm-border flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                      <div className="flex items-start sm:items-center gap-1.5 text-warm-neutral min-w-0">
+                        <MapPin className="w-3.5 h-3.5 text-terracotta shrink-0 mt-0.5 sm:mt-0" />
+                        <span className="min-w-0 break-words">Alamat antar: <strong className="text-warm-black font-medium">{currentAddress || 'Belum diatur'}</strong></span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setIsAddressModalOpen(true)}
+                        className="text-forest hover:underline font-semibold text-xs text-left cursor-pointer min-h-[32px] sm:min-h-0 flex items-center shrink-0"
+                      >
+                        Ubah alamat
+                      </button>
+                    </div>
+                  </div>
+                </>
+              );
+            })()}
 
             {/* Action Shortcuts: Clean Label Verification & 45-Min Guarantee */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
@@ -624,106 +710,105 @@ export default function SubscriptionControlPage() {
         )}
       </div>
 
-      {/* Modal 1: Swap Menu from Catalog */}
-      {isSwapModalOpen && (
-        <div className="fixed inset-0 z-50 bg-warm-black/40 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-warm-surface border border-warm-border rounded-[18px] max-w-lg w-full max-h-[90vh] flex flex-col shadow-natural-lg overflow-hidden">
-            <div className="p-6 pb-3 border-b border-warm-border flex justify-between items-start shrink-0">
-              <div>
-                <h3 className="font-display font-semibold text-base text-warm-black">
-                  Tukar menu untuk pengiriman besok
-                </h3>
-                <p className="text-xs text-warm-muted mt-0.5">
-                  Pilih varian sajian pengganti dari katalog rotasi dapur sentral sebelum pukul 20.00 WIB.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsSwapModalOpen(false)}
-                className="text-warm-stone hover:text-warm-black p-1 -mr-1"
-                aria-label="Tutup formulir tukar menu"
-              >
-                <X className="w-4 h-4" />
-              </button>
+      {/* Rincian Transaksi & Paket Langganan Aktif */}
+      <div className="bg-warm-surface border border-warm-border rounded-[20px] p-6 md:p-8 grain-overlay-light space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-warm-border">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <Receipt className="w-4 h-4 text-forest" />
+              <h2 className="font-display font-semibold text-lg text-warm-black">
+                Rincian transaksi & paket langganan Anda
+              </h2>
             </div>
-
-            <div className="p-6 py-4 overflow-y-auto custom-pill-scrollbar flex-1 space-y-3">
-              <label className="block text-xs font-semibold text-warm-black mb-1">
-                Pilih menu katering pengganti:
-              </label>
-
-              {catalogMeals.map((meal) => {
-                const isSelected = selectedSwapRecipeId === meal.id;
-                return (
-                  <button
-                    key={meal.id}
-                    type="button"
-                    disabled={!meal.isAvailable}
-                    onClick={() => setSelectedSwapRecipeId(meal.id)}
-                    className={`w-full text-left p-3.5 rounded-xl border transition-all flex items-start justify-between gap-3 ${
-                      !meal.isAvailable
-                        ? 'opacity-40 cursor-not-allowed bg-tebu-100 border-warm-border'
-                        : isSelected
-                        ? 'border-forest bg-forest-subtle shadow-natural'
-                        : 'border-warm-border bg-tebu-50 hover:bg-tebu-100'
-                    }`}
-                  >
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-mono font-medium px-1.5 py-0.5 rounded bg-tebu-200 text-warm-black">
-                          {meal.sku}
-                        </span>
-                        <span className="text-[10px] text-warm-muted">{meal.category}</span>
-                      </div>
-                      <h4 className="font-display font-semibold text-xs text-warm-black leading-snug">
-                        {meal.title}
-                      </h4>
-                      <p className="text-[11px] text-warm-muted">
-                        {meal.calories} kkal • Protein {meal.proteinG}g • Karbo {meal.carbG}g • Lemak {meal.fatG}g
-                      </p>
-                    </div>
-
-                    <div className="shrink-0 mt-1">
-                      {isSelected ? (
-                        <div className="w-4 h-4 rounded-full bg-forest text-tebu-50 flex items-center justify-center">
-                          <Check className="w-2.5 h-2.5" />
-                        </div>
-                      ) : (
-                        <div className="w-4 h-4 rounded-full border border-warm-border bg-warm-surface" />
-                      )}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="p-4 px-6 border-t border-warm-border bg-warm-surface flex items-center gap-2 shrink-0">
-              <button
-                type="button"
-                disabled={isSubmitting}
-                onClick={handleConfirmSwapMenu}
-                className="flex-1 py-2.5 px-4 rounded-md bg-forest hover:bg-forest-hover text-tebu-50 text-xs font-semibold tracking-tight transition-colors shadow-natural cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5"
-              >
-                {isSubmitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                <span>Konfirmasi penukaran menu besok</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsSwapModalOpen(false)}
-                className="py-2.5 px-4 rounded-md bg-warm-surface border border-warm-border hover:bg-tebu-100 text-warm-muted hover:text-warm-black text-xs font-medium transition-colors cursor-pointer"
-              >
-                Batalkan
-              </button>
-            </div>
+            <p className="text-xs text-warm-muted">
+              Daftar seluruh transaksi pembayaran dan paket katering aktif yang sedang berjalan untuk akun Anda.
+            </p>
           </div>
+          <span className="text-[11px] font-semibold px-2.5 py-1 rounded bg-tebu-100 border border-warm-border text-warm-black w-fit">
+            {userTransactions.length} transaksi aktif
+          </span>
         </div>
-      )}
+
+        {loadingTransactions ? (
+          <div className="py-8 text-center text-xs text-warm-muted flex items-center justify-center gap-2">
+            <Loader2 className="w-4 h-4 animate-spin text-forest" />
+            <span>Memuat rincian transaksi...</span>
+          </div>
+        ) : userTransactions.length === 0 ? (
+          <div className="py-8 text-center text-xs text-warm-muted space-y-2">
+            <p>Belum ada transaksi pembayaran aktif untuk akun ini.</p>
+            <Link
+              href="/checkout"
+              className="inline-block px-4 py-2 bg-forest text-tebu-50 rounded-md text-xs font-semibold hover:bg-forest-hover transition-colors"
+            >
+              Pilih paket katering sekarang
+            </Link>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {userTransactions.map((tx) => (
+              <div
+                key={tx.id || tx.invoiceNumber}
+                className="p-4 rounded-[14px] bg-tebu-50 border border-warm-border flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all hover:border-warm-neutral"
+              >
+                <div className="space-y-2 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-mono text-xs font-bold text-warm-black">
+                      {tx.invoiceNumber}
+                    </span>
+                    <span
+                      className={`text-[10px] font-semibold px-2 py-0.5 rounded ${
+                        tx.transactionStatus === 'SETTLEMENT' || tx.transactionStatus === 'CAPTURE'
+                          ? 'bg-forest-subtle text-forest border border-forest-border'
+                          : 'bg-warm-border text-warm-muted'
+                      }`}
+                    >
+                      {tx.transactionStatus === 'SETTLEMENT' ? 'Pembayaran terkonfirmasi' : tx.transactionStatus}
+                    </span>
+                    <span className="text-[11px] text-warm-stone">
+                      • {formatDateIndo(tx.paidAt || tx.createdAt)}
+                    </span>
+                  </div>
+
+                  <div className="space-y-0.5">
+                    <h3 className="font-display font-semibold text-sm text-warm-black">
+                      Paket {formatPackageName(tx.packageType)}
+                    </h3>
+                    <p className="text-xs text-warm-muted">
+                      Durasi: <strong className="text-warm-black font-medium">{tx.durationDays} hari kerja</strong> • Metode: {formatPaymentMethod(tx.paymentType)}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex md:flex-col items-baseline md:items-end justify-between md:justify-center border-t md:border-t-0 pt-2 md:pt-0 border-warm-border/60 shrink-0">
+                  <span className="text-[11px] text-warm-stone">Total pembayaran</span>
+                  <span className="font-display font-bold text-base text-warm-black">
+                    {tx.formattedAmount || `Rp ${Math.round(tx.amount).toLocaleString('id-ID')}`}
+                  </span>
+                </div>
+              </div>
+            ))}
+
+            {userTransactions.length > 1 && (
+              <div className="pt-2 px-1 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs border-t border-warm-border">
+                <span className="text-warm-muted break-words">
+                  Akumulasi total dari {userTransactions.length} transaksi paket aktif:
+                </span>
+                <span className="font-bold text-warm-black break-words text-left sm:text-right">
+                  Total Rp {userTransactions.reduce((acc, cur) => acc + (cur.amount || 0), 0).toLocaleString('id-ID')} ({userTransactions.reduce((acc, cur) => acc + (cur.durationDays || 0), 0)} hari kerja pengiriman)
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
 
       {/* Modal 2: Change Address Form with Optional Pin Map */}
       {isAddressModalOpen && (
-        <div className="fixed inset-0 z-50 bg-warm-black/40 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-warm-surface border border-warm-border rounded-[18px] max-w-lg w-full max-h-[90vh] flex flex-col shadow-natural-lg overflow-hidden">
-            <div className="p-6 pb-3 border-b border-warm-border flex justify-between items-start shrink-0">
+        <div className="fixed inset-0 z-50 bg-warm-black/40 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+          <div className="bg-warm-surface border border-warm-border rounded-[18px] max-w-lg w-full max-h-[85dvh] flex flex-col shadow-natural-lg overflow-hidden">
+            <div className="p-4 sm:p-6 pb-3 border-b border-warm-border flex justify-between items-start shrink-0">
               <div>
                 <h3 className="font-display font-semibold text-base text-warm-black">
                   Ubah alamat pengantaran
@@ -743,7 +828,7 @@ export default function SubscriptionControlPage() {
             </div>
 
             <form onSubmit={handleSaveAddress} className="flex flex-col flex-1 min-h-0 overflow-hidden">
-              <div className="p-6 py-4 overflow-y-auto custom-pill-scrollbar flex-1 space-y-3.5">
+              <div className="p-4 sm:p-6 py-4 overflow-y-auto custom-pill-scrollbar flex-1 space-y-3.5">
                 {/* Row 1: Label Alamat & Kota / Area */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
@@ -866,7 +951,7 @@ export default function SubscriptionControlPage() {
                             <span className="font-semibold text-warm-black shrink-0">Koordinat pin:</span>
                           </div>
 
-                          <div className="flex items-center gap-2">
+                          <div className="flex flex-wrap items-center gap-2">
                             <div className="flex items-center rounded border border-warm-border bg-tebu-50 px-2 py-1 text-xs font-mono shadow-natural">
                               <span className="text-[10px] text-warm-stone font-sans mr-1.5 select-none">Lat</span>
                               <input
@@ -908,7 +993,7 @@ export default function SubscriptionControlPage() {
                             href={`https://www.google.com/maps/search/?api=1&query=${pinnedCoordinates.lat},${pinnedCoordinates.lng}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="w-full sm:w-auto py-2 px-3 rounded-lg bg-tebu-50 hover:bg-tebu-100 border border-warm-border text-forest text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 shadow-natural"
+                            className="w-full sm:w-auto py-2.5 px-3 rounded-lg bg-tebu-50 hover:bg-tebu-100 border border-warm-border text-forest text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 shadow-natural min-h-[40px]"
                           >
                             <ExternalLink className="w-3.5 h-3.5 text-forest shrink-0" />
                             <span>Buka Google Maps</span>
@@ -921,11 +1006,11 @@ export default function SubscriptionControlPage() {
               </div>
 
               {/* Sticky Action Footer */}
-              <div className="p-4 px-6 border-t border-warm-border bg-warm-surface flex items-center gap-2 shrink-0">
+              <div className="p-4 sm:px-6 border-t border-warm-border bg-warm-surface flex items-center gap-2 shrink-0">
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="flex-1 py-2.5 px-4 rounded-md bg-forest hover:bg-forest-hover text-tebu-50 text-xs font-semibold tracking-tight transition-colors shadow-natural cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5"
+                  className="flex-1 py-3 px-4 rounded-md bg-forest hover:bg-forest-hover text-tebu-50 text-xs font-semibold tracking-tight transition-colors shadow-natural cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5 min-h-[44px]"
                 >
                   {isSubmitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                   <span>Simpan alamat pengantaran</span>
@@ -933,7 +1018,7 @@ export default function SubscriptionControlPage() {
                 <button
                   type="button"
                   onClick={() => setIsAddressModalOpen(false)}
-                  className="py-2.5 px-4 rounded-md bg-warm-surface border border-warm-border hover:bg-tebu-100 text-warm-muted hover:text-warm-black text-xs font-medium transition-colors cursor-pointer"
+                  className="py-3 px-4 rounded-md bg-warm-surface border border-warm-border hover:bg-tebu-100 text-warm-muted hover:text-warm-black text-xs font-medium transition-colors cursor-pointer min-h-[44px]"
                 >
                   Batalkan
                 </button>
@@ -945,8 +1030,8 @@ export default function SubscriptionControlPage() {
 
       {/* Modal 3: 45-Minute Service Recovery Claim */}
       {isServiceRecoveryOpen && (
-        <div className="fixed inset-0 z-50 bg-warm-black/40 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-warm-surface border border-warm-border rounded-[18px] max-w-md w-full p-6 space-y-4 shadow-natural-lg">
+        <div className="fixed inset-0 z-50 bg-warm-black/40 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+          <div className="bg-warm-surface border border-warm-border rounded-[18px] max-w-md w-full p-5 sm:p-6 space-y-4 shadow-natural-lg">
             <div className="flex justify-between items-center pb-2 border-b border-warm-border">
               <div className="flex items-center gap-2">
                 <ShieldCheck className="w-4 h-4 text-forest" />
@@ -957,7 +1042,8 @@ export default function SubscriptionControlPage() {
               <button
                 type="button"
                 onClick={() => setIsServiceRecoveryOpen(false)}
-                className="text-warm-stone hover:text-warm-black cursor-pointer"
+                className="text-warm-stone hover:text-warm-black cursor-pointer p-1"
+                aria-label="Tutup garansi layanan"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -987,26 +1073,26 @@ export default function SubscriptionControlPage() {
                 <input
                   type="file"
                   accept="image/*"
-                  className="w-full text-xs text-warm-muted file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-medium file:bg-tebu-100 file:text-warm-black hover:file:bg-tebu-200"
+                  className="w-full text-xs text-warm-muted file:mr-3 file:py-2 file:px-3 file:rounded file:border-0 file:text-xs file:font-medium file:bg-tebu-100 file:text-warm-black hover:file:bg-tebu-200"
                 />
               </div>
             </div>
 
-            <div className="pt-2 flex gap-2">
+            <div className="pt-2 flex flex-col sm:flex-row gap-2">
               <button
                 type="button"
                 onClick={() => {
                   alert('Laporan kendala Anda telah diterima. Tim penjaminan mutu NutriDaily akan menindaklanjuti dalam 15 menit.');
                   setIsServiceRecoveryOpen(false);
                 }}
-                className="flex-1 py-2.5 bg-forest hover:bg-forest-hover text-tebu-50 text-xs font-semibold rounded-md transition-colors cursor-pointer"
+                className="flex-1 py-3 bg-forest hover:bg-forest-hover text-tebu-50 text-xs font-semibold rounded-md transition-colors cursor-pointer min-h-[44px] flex items-center justify-center"
               >
                 Kirimkan laporan garansi
               </button>
               <button
                 type="button"
                 onClick={() => setIsServiceRecoveryOpen(false)}
-                className="px-4 py-2.5 text-xs font-medium text-warm-muted hover:text-warm-black cursor-pointer"
+                className="px-4 py-3 text-xs font-medium text-warm-muted hover:text-warm-black cursor-pointer min-h-[44px] flex items-center justify-center"
               >
                 Batal
               </button>
@@ -1018,7 +1104,7 @@ export default function SubscriptionControlPage() {
 
       {/* Censor Overlay with Blur Background (mirip Rotasi jadwal mingguan) */}
       {!isAuthenticated && (
-        <div className="absolute inset-0 z-20 flex items-start justify-center p-4 pt-24 md:pt-36">
+        <div className="absolute inset-0 z-20 flex items-start justify-center p-4 pt-20 md:pt-36">
           <div className="max-w-md w-full bg-warm-surface/95 backdrop-blur-md border border-warm-border rounded-[20px] p-6 md:p-8 text-center shadow-natural-lg grain-overlay-light space-y-4">
             <div className="w-12 h-12 rounded-full bg-forest-subtle border border-forest-border flex items-center justify-center mx-auto text-forest">
               <Lock className="w-5 h-5" aria-hidden="true" />
@@ -1035,13 +1121,13 @@ export default function SubscriptionControlPage() {
             <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-2.5">
               <Link
                 href="/account/login?next=/dashboard"
-                className="w-full sm:w-auto px-5 py-2.5 rounded-md bg-forest hover:bg-forest-hover text-tebu-50 text-xs font-semibold transition-colors shadow-natural text-center"
+                className="w-full sm:w-auto px-5 py-3 rounded-md bg-forest hover:bg-forest-hover text-tebu-50 text-xs font-semibold transition-colors shadow-natural text-center min-h-[44px] flex items-center justify-center"
               >
                 Masuk ke akun sekarang
               </Link>
               <Link
                 href="/account/register"
-                className="w-full sm:w-auto px-5 py-2.5 rounded-md bg-tebu-50 border border-warm-border hover:bg-tebu-100 text-warm-black text-xs font-semibold transition-colors shadow-natural text-center"
+                className="w-full sm:w-auto px-5 py-3 rounded-md bg-tebu-50 border border-warm-border hover:bg-tebu-100 text-warm-black text-xs font-semibold transition-colors shadow-natural text-center min-h-[44px] flex items-center justify-center"
               >
                 Daftar akun baru
               </Link>

@@ -19,7 +19,6 @@ const manrope = Manrope({
 const fraunces = Fraunces({
   subsets: ['latin'],
   variable: '--font-fraunces',
-  weight: ['500', '600', '700'],
   display: 'swap',
 });
 
@@ -42,8 +41,8 @@ export const viewport: Viewport = {
   themeColor: '#2C4A3E',
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
+  maximumScale: 5,
+  viewportFit: 'cover',
 };
 
 export default function RootLayout({
@@ -94,7 +93,7 @@ export default function RootLayout({
           </header>
 
           {/* Semantic Landmark 2: Main Content (Must NOT contain header or footer) */}
-          <main id="main-content" className="flex-1 pb-16 md:pb-0">
+          <main id="main-content" className="flex-1 pb-20 md:pb-0">
             {children}
           </main>
 
